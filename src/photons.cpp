@@ -4,6 +4,31 @@
 
 using namespace std;
 
+void bubble_sort(double *vals, int *x, int *y, int n)
+{
+    for (int i=0;i<(n-1);i++) 
+    {
+        for (int j=0;j<(n - i - 1);j++) 
+        {
+
+            if (vals[j] < vals[j + 1]) 
+            {
+                double a = vals[j];
+                vals[j] = vals[j+1];
+                vals[j + 1] = a;
+
+                int b = x[j];
+                x[j] = x[j+1];
+                x[j+1] = b;
+
+                int c = y[j];
+                y[j] = y[j+1];
+                y[j+1] = c;
+            }
+        }
+    }
+}
+
 int find_photons_uint16(uint16_t *image, uint16_t *out, double *table, double *bias,
         size_t X, size_t Y, uint16_t threshold)
 {
@@ -51,23 +76,22 @@ template<typename DataType> int process_bias(DataType *pixels, DataType *out, si
     return 0;
 }
 
-int process_pixel(double *pixels, int box_val, double *com_x, double *com_y, int *sum)
+int process_pixel(double *pixels, int *x, int *y, int n, double *com_x, double *com_y, int *sum)
 {
+    double *pixels_p = pixels;
+    int *x_p = x;
+    int *y_p = y;
+
     *com_x = 0;
     *com_y = 0;
     *sum = 0;
 
-    double *pixels_p = pixels;
-
-    for(int j=-box_val;j<=box_val;j++)
+    for(int i=0;i<n;i++)
     {
-        for(int i=-box_val;i<=box_val;i++)
-        {
            *sum += (*pixels_p); 
-           *com_x += (*pixels_p) * i;
-           *com_y += (*pixels_p) * j;
+           *com_x += (*pixels_p) * *(x_p++);
+           *com_y += (*pixels_p) * *(y_p++);
            pixels_p++;
-        }
     }
 
     *com_y /= *sum;
@@ -79,20 +103,14 @@ int process_pixel(double *pixels, int box_val, double *com_x, double *com_y, int
 template<typename DataType> int process_photons(DataType *image, DataType *out, double *table, 
         size_t X, size_t Y, double *bias)
 {
-    // We habe found the highest pixel.
-    // Now Process it
-    
-    unsigned int box_val = 1;
-    unsigned int box_val_n = (box_val * 2) + 1;
+    int box_val = 1;
+    int box_val_n = (box_val * 2) + 1;
+    int box_val_t = box_val_n * box_val_n;
 
-    double *pixel_cluster = (double*)malloc(sizeof(double) * box_val_n * box_val_n);
-    if(!pixel_cluster)
-    {
-        return 127;
-    }
+    int xvals[box_val_t];
+    int yvals[box_val_t];
+    double pixel_cluster[box_val_t];
     
-    // Loop over all photons
-
     DataType *image_p = image;
     DataType *out_p = out;
     double *table_p = table;
@@ -112,21 +130,22 @@ template<typename DataType> int process_photons(DataType *image, DataType *out, 
                 _op -= (X * box_val);
 
                 double *_pix = pixel_cluster;
+                int *_xvals = xvals;
+                int *_yvals = yvals;
 
                 bool flag = true;
 
-                for(size_t l=0;l<box_val_n;l++)
+                for(int l=-box_val;l<=box_val;l++)
                 {
-                    for(size_t k=0;k<box_val_n;k++)
+                    for(int k=-box_val;k<=box_val;k++)
                     {
-                        if((*_op & 0xFF) != 1)
+                        if((*(_op++) & 0xFF) != 1)
                         {
                             flag = false;
                         }
-                        *_pix = *_ip - *bias_p;
-                        _ip++;
-                        _op++;
-                        _pix++;
+                        *(_pix++) = *(_ip++) - *bias_p;
+                        *(_xvals++) = k;
+                        *(_yvals++) = l;
                     }
                     _ip += (X - box_val_n);
                     _op += (X - box_val_n);
@@ -134,12 +153,14 @@ template<typename DataType> int process_photons(DataType *image, DataType *out, 
 
                 if(flag)
                 {
-                    // We hve a valid pixel.
+                    // We have a valid pixel.
 
                     double comx, comy;
                     int sum;
 
-                    process_pixel(pixel_cluster, box_val, &comx, &comy, &sum);
+                    bubble_sort(pixel_cluster, xvals, yvals, box_val_t);
+
+                    process_pixel(pixel_cluster, xvals, yvals, box_val_t, &comx, &comy, &sum);
 
                     table_p[0] = i;  
                     table_p[1] = j;  
