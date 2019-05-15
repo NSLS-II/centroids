@@ -23,8 +23,9 @@ class get_pybind_include(object):
 
 ext_modules = [
     Extension(
-        'python_example',
-        ['src/binding.cpp'],
+        'centroids',
+		sources=['src/binding.cpp',
+		         'src/photons.cpp'],
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
@@ -81,6 +82,7 @@ class BuildExt(build_ext):
         if ct == 'unix':
             opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
             opts.append(cpp_flag(self.compiler))
+            opts.append('-fopenmp')
             if has_flag(self.compiler, '-fvisibility=hidden'):
                 opts.append('-fvisibility=hidden')
         elif ct == 'msvc':
@@ -90,7 +92,7 @@ class BuildExt(build_ext):
         build_ext.build_extensions(self)
 
 setup(
-    name='python_example',
+    name='optio',
     version=__version__,
     author='Stuart B. Wilkins',
     author_email='stuart@stuwilkins.org',
