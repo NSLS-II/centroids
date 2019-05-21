@@ -88,10 +88,10 @@ int process_pixel(double *pixels, int *x, int *y, int n, double *com_x, double *
 
     for(int i=0;i<n;i++)
     {
-           *sum += (*pixels_p); 
-           *com_x += (*pixels_p) * *(x_p++);
-           *com_y += (*pixels_p) * *(y_p++);
-           pixels_p++;
+        *sum += (*pixels_p); 
+        *com_x += (*pixels_p) * *(x_p++);
+        *com_y += (*pixels_p) * *(y_p++);
+        pixels_p++;
     }
 
     *com_y /= *sum;
