@@ -21,13 +21,13 @@ jobs:
           versionSpec: '$(python.version)'
           architecture: 'x64'
       - bash: echo "##vso[task.prependpath]$CONDA/bin"
-          displayName: Add conda to PATH
+        displayName: Add conda to PATH
       - bash: conda create --yes --quiet --name testenv
-          displayName: Create Anaconda environment
+        displayName: Create Anaconda environment
       - bash: |
             source activate myEnvironment
             conda install --yes --quiet --name testenv pybind11
-          displayName: Install Anaconda packages
+        displayName: Install Anaconda packages
 
           #      - script: |
           #python -m pip install flake8
