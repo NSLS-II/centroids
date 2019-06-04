@@ -33,9 +33,5 @@ jobs:
           #python -m pip install flake8
           #flake8 .
           #displayName: 'Run lint tests'|
-      - script: |
-          wget https://github.com/pybind/pybind11/archive/v2.2.4.tar.gz
-
-        displayName: Install pybind11
       - script: python setup.py install
         displayName: Install using setup.py
