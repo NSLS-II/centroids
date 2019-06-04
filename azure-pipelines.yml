@@ -20,12 +20,16 @@ jobs:
         inputs:
           versionSpec: '$(python.version)'
           architecture: 'x64'
+      - bash: echo "##vso[task.prependpath]$CONDA/bin"
+          displayName: Add conda to PATH
 
           #      - script: |
           #python -m pip install flake8
           #flake8 .
           #displayName: 'Run lint tests'|
-      - script: python -m pip install pybind11    
+      - script: |
+          wget https://github.com/pybind/pybind11/archive/v2.2.4.tar.gz
+
         displayName: Install pybind11
       - script: python setup.py install
         displayName: Install using setup.py
