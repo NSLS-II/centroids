@@ -6,14 +6,23 @@
 trigger:
 - master
 
-pool:
-  vmImage: 'ubuntu-latest'
-
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
+jobs:
+- job: 'Test'
+  pool:
+    vmImage: 'ubuntu-latest'
+  strategy:
+    matrix:
+      Python35:
+        python.version: '3.5'
+      Python36:
+        python.version: '3.6'
+    maxParallel: 2
+	steps:
+		- task: UsePythonVersion@0
+		  inputs:
+			  versionSpec: '$(python.version)'
+			  architecture: 'x64'
 - script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+    python -m pip install flake8
+    flake8 .
+  displayName: 'Run lint tests'
