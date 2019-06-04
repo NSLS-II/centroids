@@ -1,4 +1,10 @@
 tmp
+CMake*
+cmake_install.cmake
+Makefile
+libcentroids.a
+version.cpp
+
 #
 # Byte-compiled / optimized / DLL files
 __pycache__/

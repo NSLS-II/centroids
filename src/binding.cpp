@@ -2,6 +2,7 @@
 #include <pybind11/numpy.h>
 
 #include "photons.h"
+#include "version.h"
 
 int _debug_print_flag = 1;
 
@@ -50,12 +51,8 @@ py::tuple _find_photons(py::array_t<uint16_t> images)
     return args;
 }
 
-PYBIND11_MODULE(centroids, m) {
+PYBIND11_MODULE(pycentroids, m) {
    m.doc() = "Fast centroiding routines for CCD detectors";
    m.def("find_photons", &_find_photons, "Find photons");
-#ifdef VERSION_INFO
-   m.attr("__version__") = VERSION_INFO;
-#else
-   m.attr("__version__") = "dev";
-#endif
+   m.attr("__version__") = GIT_VERSION;
 }
