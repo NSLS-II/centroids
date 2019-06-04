@@ -24,6 +24,8 @@ jobs:
           #      - script: |
           #python -m pip install flake8
           #flake8 .
-          #displayName: 'Run lint tests'
+          #displayName: 'Run lint tests'|
+      - script: python -m pip install pybind11    
+        displayName: Install pybind11
       - script: python setup.py install
         displayName: Install using setup.py
