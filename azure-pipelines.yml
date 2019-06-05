@@ -38,3 +38,9 @@ jobs:
             python --version
             python setup.py install
         displayName: Install using setup.py
+      - script: |
+            source activate testenv
+            pip install pytest
+            pip install pytest-cov
+            pytest tests --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+        displayName: 'Test with pytest'
