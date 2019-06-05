@@ -33,5 +33,7 @@ jobs:
           #python -m pip install flake8
           #flake8 .
           #displayName: 'Run lint tests'|
-      - script: python setup.py install
+      - script: |
+          source activate testenv
+          python setup.py install
         displayName: Install using setup.py
