@@ -22,7 +22,7 @@ jobs:
           architecture: 'x64'
       - bash: echo "##vso[task.prependpath]$CONDA/bin"
         displayName: Add conda to PATH
-      - bash: conda create --yes --quiet --name testenv
+      - bash: conda create --yes --quiet --name testenv python=$(python.version)
         displayName: Create Anaconda environment
       - bash: |
             source activate testenv
