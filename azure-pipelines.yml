@@ -18,8 +18,8 @@ jobs:
     steps:
       - task: UsePythonVersion@0
         inputs:
-          versionSpec: '$(python.version)'
-          architecture: 'x64'
+            versionSpec: '$(python.version)'
+            architecture: 'x64'
       - bash: echo "##vso[task.prependpath]$CONDA/bin"
         displayName: Add conda to PATH
       - bash: conda create --yes --quiet --name testenv python=$(python.version)
@@ -28,8 +28,13 @@ jobs:
             source activate testenv
             conda install --yes --quiet --name testenv pybind11
         displayName: Install Anaconda packages
+      - script: |
+            source activate testenv
+            python -m pip install flake8
+            flake8 .
+        displayName: 'Run lint tests'
       - bash: |
-          source activate testenv
-          python --version
-          python setup.py install
+            source activate testenv
+            python --version
+            python setup.py install
         displayName: Install using setup.py
