@@ -35,5 +35,6 @@ jobs:
           #displayName: 'Run lint tests'|
       - script: |
           source activate testenv
+          python --version
           python setup.py install
         displayName: Install using setup.py
