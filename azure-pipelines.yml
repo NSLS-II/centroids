@@ -28,12 +28,7 @@ jobs:
             source activate testenv
             conda install --yes --quiet --name testenv pybind11
         displayName: Install Anaconda packages
-
-          #      - script: |
-          #python -m pip install flake8
-          #flake8 .
-          #displayName: 'Run lint tests'|
-      - script: |
+      - bash: |
           source activate testenv
           python --version
           python setup.py install
