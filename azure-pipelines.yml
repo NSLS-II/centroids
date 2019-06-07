@@ -60,9 +60,13 @@ jobs:
             git config user.name "ci-build"
           displayName: Install Deps
         - script: |
+            cd docs/doxygen
+            doxygen
+          displayName: Build Doxygen Docs
+        - script: |
             cd docs
             make html
-          displayName: Build Docs
+          displayName: Build Sphinx Docs
         - script: |
             mkdir ~/.ssh && mv $DOWNLOADSECUREFILE_SECUREFILEPATH ~/.ssh/id_rsa
             chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_rsa
