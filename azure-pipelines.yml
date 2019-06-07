@@ -52,4 +52,12 @@ jobs:
     steps:
         - script: |
             npm install gh-pages
+            git config user.email "ci-build@bnl.gov"
+            git config user.name "ci-build"
           displayName: Install gh-pages
+        - script: |
+            cd docs
+            make html
+            gh-pages --dist build/html
+          displayName: Build and upload docs
+
