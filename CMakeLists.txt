@@ -13,6 +13,12 @@ ADD_CUSTOM_COMMAND(
 	${CMAKE_CURRENT_SOURCE_DIR}/version.cmake)
 
 find_package(pybind11 REQUIRED)
-pybind11_add_module(pycentroids src/binding.cpp src/photons.cpp src/photons.h ${CMAKE_CURRENT_BINARY_DIR}/version.cpp)
+pybind11_add_module(pycentroids 
+	src/binding.cpp src/photons.cpp src/photons.h 
+	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
+)
 
-add_library(centroids src/photons.cpp src/photons.h ${CMAKE_CURRENT_BINARY_DIR}/version.cpp)
+add_library(centroids 
+	src/photons.cpp src/photons.h 
+	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
+)
