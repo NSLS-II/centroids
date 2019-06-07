@@ -51,5 +51,5 @@ jobs:
         vmImage: 'ubuntu-latest'
     steps:
         - script: |
-            npm install -g --silent gh-pages
+            npm install gh-pages
           displayName: Install gh-pages
