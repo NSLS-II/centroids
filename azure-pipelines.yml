@@ -50,6 +50,10 @@ jobs:
     pool:
         vmImage: 'ubuntu-latest'
     steps:
+        - task: DownloadSecureFile@1
+          inputs:
+              secureFile: deploy_key
+          displayName: 'Get the deploy key'
         - script: |
             pip install sphinx
             npm install gh-pages
@@ -58,6 +62,8 @@ jobs:
           displayName: Install Deps
         - script: |
             cd docs
+            pwd
+            ls
             make html
             gh-pages --dist build/html
           displayName: Build and upload docs
