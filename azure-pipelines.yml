@@ -4,7 +4,7 @@
 # https://aka.ms/yaml
 
 jobs:
-  - job: 'Test'
+  - job: 'Build and test'
     pool:
       vmImage: 'ubuntu-latest'
     strategy:
@@ -45,3 +45,11 @@ jobs:
             pytest tests --doctest-modules --junitxml=junit/test-results.xml \
                 --cov=com --cov-report=xml --cov-report=html
         displayName: 'Test with pytest'
+
+  - job: 'Build and publish docs'
+    pool:
+        vmImage: 'ubuntu-latest'
+    steps:
+        - script: |
+            npm install -g --silent gh-pages
+          displayName: Install gh-pages
