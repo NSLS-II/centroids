@@ -51,10 +51,11 @@ jobs:
         vmImage: 'ubuntu-latest'
     steps:
         - script: |
+            pip install sphinx
             npm install gh-pages
             git config user.email "ci-build@bnl.gov"
             git config user.name "ci-build"
-          displayName: Install gh-pages
+          displayName: Install Deps
         - script: |
             cd docs
             make html
