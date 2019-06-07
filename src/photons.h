@@ -21,31 +21,32 @@ template <typename DataType> struct centroid_params {
     int box;
     int box_t;
     int box_n;
+    int pixel_bgnd_num;
+    int pixel_photon_num;
     DataType threshold; 
 };
 
 enum {
-    CENTROIDS_PARAMS_OK = 0
+    CENTROIDS_PARAMS_OK = 0,
+    CENTROIDS_PARAMS_BAD = 1
 };
 
 template <typename DataType> int centroids_initialize_params(centroid_params<DataType> &params);
 
-template<typename DT> void swap(DT *a, DT *b);
-
-void bubble_sort(double *vals, int *x, int *y, int n);
-
-template<typename DataType> int process_image(DataType *image, uint16_t *out, double *table, double *bias,
+template<typename DataType> int centroids_process(DataType *image, uint16_t *out, double *table, double *bias,
         size_t X, size_t Y, centroid_params<DataType> params);
 
-template<typename DataType> int process_bias(DataType *pixels, uint16_t *out, size_t X, size_t Y, 
+template<typename DataType> int centroids_process_bias(DataType *pixels, uint16_t *out, size_t X, size_t Y, 
         double *bias);
 
-template<typename DataType> int process_photons(DataType *image, uint16_t *out, double *table, 
+template<typename DataType> int centroids_process_photons(DataType *image, uint16_t *out, double *table, 
         size_t X, size_t Y, double *bias, centroid_params<DataType> params);
 
-template<typename DataType> int find_photons(DataType *image, uint16_t *out, 
+template<typename DataType> int centroids_find_photons(DataType *image, uint16_t *out, 
         size_t X, size_t Y, centroid_params<DataType> params);
 
-int process_pixel(double *pixels, int *x, int *y, int n, double *com_x, double *com_y, int *sum);
+int _calculate_com(double *pixels, int *x, int *y, double *com_x, double *com_y, int n);
+template<typename DT> void _swap(DT *a, DT *b);
+void _bubble_sort(double *vals, int *x, int *y, int n);
 
 #endif

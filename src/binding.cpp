@@ -13,6 +13,8 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
     centroid_params<uint16_t> params;
     params.box = box;
     params.threshold = threshold;
+    params.pixel_photon_num = 10;
+    params.pixel_bgnd_num = 10;
 
     centroids_initialize_params<uint16_t>(params);
 
@@ -26,7 +28,7 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
     // Allcoate the table buffer
    
     int box_total = (2 * box + 1) * (2 * box + 1);
-    py::array_t<double> table = py::array_t<double>(100000 * (box_total + 7));
+    py::array_t<double> table = py::array_t<double>(100000 * (box_total + 8));
     py::buffer_info buf3 = table.request();
 
     /* allocate the bias buffer */
@@ -42,17 +44,17 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
 
     // Blank the table
 
-    for(int i=0;i<100000*(7 + box_total);i++)
+    for(int i=0;i<100000*(8 + box_total);i++)
     {
         table_ptr[i] = 0.0;
     }
 
-    int nphotons = process_image<uint16_t>(in_ptr, out_ptr, table_ptr, bias_ptr, X, Y, params);
+    int nphotons = centroids_process<uint16_t>(in_ptr, out_ptr, table_ptr, bias_ptr, X, Y, params);
 
     /* Reshape result to have same shape as input */
     result.resize({Y, X});
     bias.resize({Y, X});
-    table.resize({nphotons, 7 + box_total});
+    table.resize({nphotons, 8 + box_total});
 
     py::tuple args = py::make_tuple(table, result, bias);
     return args;
@@ -61,6 +63,6 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
 PYBIND11_MODULE(pycentroids, m) {
    m.doc() = "Fast centroiding routines for CCD detectors";
    m.def("find_photons", &_find_photons, "Find photons", 
-           py::arg("images"), py::arg("threshold"), py::arg("box") = 1);
+           py::arg("images"), py::arg("threshold"), py::arg("box") = 2);
    m.attr("__version__") = GIT_VERSION;
 }
