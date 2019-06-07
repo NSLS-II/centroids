@@ -54,6 +54,10 @@ jobs:
           inputs:
               secureFile: deploy_key
           displayName: 'Get the deploy key'
+        - task: UsePythonVersion@0
+          inputs:
+              versionSpec: '3.6'
+              architecture: 'x64'
         - script: |
             python -m pip install sphinx
             npm install gh-pages
