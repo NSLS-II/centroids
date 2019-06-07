@@ -4,7 +4,7 @@
 # https://aka.ms/yaml
 
 jobs:
-  - job: 'Build and test'
+  - job: 'Build_Test'
     pool:
       vmImage: 'ubuntu-latest'
     strategy:
@@ -46,7 +46,7 @@ jobs:
                 --cov=com --cov-report=xml --cov-report=html
         displayName: 'Test with pytest'
 
-  - job: 'Build and publish docs'
+  - job: 'Build_Docs'
     pool:
         vmImage: 'ubuntu-latest'
     steps:
