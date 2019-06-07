@@ -60,14 +60,12 @@ jobs:
               architecture: 'x64'
         - script: |
             python -m pip install sphinx
-            npm install gh-pages
+            sudo npm install gh-pages
             git config user.email "ci-build@bnl.gov"
             git config user.name "ci-build"
           displayName: Install Deps
         - script: |
             cd docs
-            pwd
-            ls
             make html
             gh-pages --dist build/html
           displayName: Build and upload docs
