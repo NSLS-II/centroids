@@ -8,7 +8,7 @@ int _debug_print_flag = 1;
 
 namespace py = pybind11;
 
-py::tuple _find_photons(py::array_t<uint16_t> images)
+py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int box)
 {
     /* read input arrays buffer_info */
     py::buffer_info buf1 = images.request();
@@ -18,8 +18,9 @@ py::tuple _find_photons(py::array_t<uint16_t> images)
     py::buffer_info buf2 = result.request();
 
     // Allcoate the table buffer
-    
-    py::array_t<double> table = py::array_t<double>(100000 * 6);
+   
+    int box_total = (2 * box + 1) * (2 * box + 1);
+    py::array_t<double> table = py::array_t<double>(100000 * (box_total + 7));
     py::buffer_info buf3 = table.request();
 
     /* allocate the bias buffer */
@@ -35,17 +36,17 @@ py::tuple _find_photons(py::array_t<uint16_t> images)
 
     // Blank the table
 
-    for(int i=0;i<1000*6;i++)
+    for(int i=0;i<100000*(7 + box_total);i++)
     {
         table_ptr[i] = 0.0;
     }
 
-    find_photons_uint16(in_ptr, out_ptr, table_ptr, bias_ptr, X, Y, 400);  
+    int nphotons = find_photons_uint16(in_ptr, out_ptr, table_ptr, bias_ptr, X, Y, threshold, box);  
 
     /* Reshape result to have same shape as input */
     result.resize({Y, X});
     bias.resize({Y, X});
-    table.resize({1000, 6});
+    table.resize({nphotons, 7 + box_total});
 
     py::tuple args = py::make_tuple(table, result, bias);
     return args;
@@ -53,6 +54,7 @@ py::tuple _find_photons(py::array_t<uint16_t> images)
 
 PYBIND11_MODULE(pycentroids, m) {
    m.doc() = "Fast centroiding routines for CCD detectors";
-   m.def("find_photons", &_find_photons, "Find photons");
+   m.def("find_photons", &_find_photons, "Find photons", 
+           py::arg("images"), py::arg("threshold"), py::arg("box") = 1);
    m.attr("__version__") = GIT_VERSION;
 }
