@@ -56,7 +56,7 @@ jobs:
               versionSpec: '3.6'
               architecture: 'x64'
         - script: |
-            python -m pip install sphinx
+            python -m pip install sphinx sphinx-bootstrap-theme breathe
             sudo npm install -g gh-pages
             git config user.email "ci-build@bnl.gov"
             git config user.name "ci-build"
