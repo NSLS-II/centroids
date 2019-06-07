@@ -1,5 +1,3 @@
-variables:
-  - group: Debug
 jobs:
   - job: 'Build_Test'
     pool:
