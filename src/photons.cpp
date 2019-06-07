@@ -4,6 +4,14 @@
 
 using namespace std;
 
+template <typename DataType> int centroids_initialize_params(centroid_params<DataType> &params)
+{
+    params.box_n = (params.box * 2) + 1;
+    params.box_t = params.box_n * params.box_n;
+
+    return CENTROIDS_PARAMS_OK;
+}
+
 /* ----------------------------------------------------------------------------*/
 /**
  * \brief Swap the values of two variables
@@ -134,13 +142,9 @@ int process_pixel(double *pixels, int *x, int *y, int n, double *com_x, double *
 template<typename DataType> int process_photons(DataType *image, uint16_t *out, double *table, 
         size_t X, size_t Y, double *bias, centroid_params<DataType> params)
 {
-    int box_val = params.box;
-    int box_val_n = (box_val * 2) + 1;
-    int box_val_t = box_val_n * box_val_n;
-
-    int xvals[box_val_t];
-    int yvals[box_val_t];
-    double pixel_cluster[box_val_t];
+    int xvals[params.box_t];
+    int yvals[params.box_t];
+    double pixel_cluster[params.box_t];
     
     DataType *image_p = image;
     uint16_t *out_p = out;
@@ -154,12 +158,12 @@ template<typename DataType> int process_photons(DataType *image, uint16_t *out, 
             {
                 // This is the central hot pixel
                 DataType *_ip = image_p;
-                _ip -= box_val;
-                _ip -= (X * box_val);
+                _ip -= params.box;
+                _ip -= (X * params.box);
 
                 uint16_t *_op = out_p;
-                _op -= box_val;
-                _op -= (X * box_val);
+                _op -= params.box;
+                _op -= (X * params.box);
 
                 double *_pix = pixel_cluster;
                 int *_xvals = xvals;
@@ -168,17 +172,17 @@ template<typename DataType> int process_photons(DataType *image, uint16_t *out, 
                 bool flag = true;
 
                 uint16_t box_sum = 0;
-                for(int l=-box_val;l<=box_val;l++)
+                for(int l=-params.box;l<=params.box;l++)
                 {
-                    for(int k=-box_val;k<=box_val;k++)
+                    for(int k=-params.box;k<=params.box;k++)
                     {
                         box_sum += (*(_op++) & 0x7FFF);
                         *(_pix++) = *(_ip++) - *bias_p;
                         *(_xvals++) = k;
                         *(_yvals++) = l;
                     }
-                    _ip += (X - box_val_n);
-                    _op += (X - box_val_n);
+                    _ip += (X - params.box_n);
+                    _op += (X - params.box_n);
                 }
 
                 if(1) // setup for choosing if to process
@@ -188,8 +192,11 @@ template<typename DataType> int process_photons(DataType *image, uint16_t *out, 
                     double comx, comy;
                     int sum;
 
-                    bubble_sort(pixel_cluster, xvals, yvals, box_val_t);
-                    process_pixel(pixel_cluster, xvals, yvals, box_val_t, &comx, &comy, &sum);
+                    bubble_sort(pixel_cluster, xvals, yvals, params.box_t);
+
+                    // Now we process background and sum
+
+                    process_pixel(pixel_cluster, xvals, yvals, params.box_t, &comx, &comy, &sum);
     
                     table_n++;
                     table_p[0] = i;  
@@ -197,18 +204,18 @@ template<typename DataType> int process_photons(DataType *image, uint16_t *out, 
                     table_p[2] = sum;
                     table_p[3] = comx + i;
                     table_p[4] = comy + j;
-                    table_p[5] = box_sum - box_val_t;
+                    table_p[5] = box_sum - params.box_t;
                     for(int n=0;n<9;n++)
                     {
                         table_p[6] += pixel_cluster[n];
                     }
 
-                    for(int n=0;n<box_val_t;n++)
+                    for(int n=0;n<params.box_t;n++)
                     {
                         table_p[7 + n] = pixel_cluster[n];
                     }
 
-                    table_p += box_val_t + 7;
+                    table_p += params.box_t + 7;
                 }
             }
 
@@ -225,8 +232,6 @@ template<typename DataType> int find_photons(DataType *image, uint16_t *out, siz
         centroid_params<DataType> params)
 {
     DataType threshold = params.threshold;
-    int box_val = params.box;
-    int box_val_n = (box_val * 2) + 1;
 
     uint16_t *out_p = out;
     DataType *in_p = image;
@@ -237,8 +242,8 @@ template<typename DataType> int find_photons(DataType *image, uint16_t *out, siz
         out[i] = 0;
     }
 
-    // Start loop through image, we need to skip by box_val
-    for(size_t j=0;j<box_val;j++)
+    // Start loop through image, we need to skip by params.box
+    for(size_t j=0;j<params.box;j++)
     {
         for(size_t i=0;i<X;i++)
         {
@@ -247,30 +252,30 @@ template<typename DataType> int find_photons(DataType *image, uint16_t *out, siz
         }
     }
 
-    for(size_t j=box_val;j<(Y-box_val);j++){
-        for(size_t i=0;i<box_val;i++)
+    for(size_t j=params.box;j<(Y-params.box);j++){
+        for(size_t i=0;i<params.box;i++)
         {
             *(out_p++) = 1;
             in_p++;
         }
-        for(size_t i=box_val;i<(X-box_val);i++)
+        for(size_t i=params.box;i<(X-params.box);i++)
         {
             // This is the main routine. 
             // Is this pixel above threshold
             if(*in_p >= threshold)
             {
                 // Check if this is the highest pixel
-                // Rewind by 1 box_val in X and 1 box_val in Y
+                // Rewind by 1 params.box in X and 1 params.box in Y
                 DataType *_p;
                 
                 _p = in_p;
-                _p -= box_val;
-                _p -= (X * box_val);
+                _p -= params.box;
+                _p -= (X * params.box);
 
                 int flag = 1;
-                for(size_t l=0;l<box_val_n;l++)
+                for(size_t l=0;l<params.box_n;l++)
                 {
-                    for(size_t k=0;k<box_val_n;k++)
+                    for(size_t k=0;k<params.box_n;k++)
                     {
                         if(*_p > *in_p)
                         {
@@ -280,7 +285,7 @@ template<typename DataType> int find_photons(DataType *image, uint16_t *out, siz
 
                         _p++;
                     }
-                    _p += (X - box_val_n);
+                    _p += (X - params.box_n);
                 }
 
                 if(flag)
@@ -292,17 +297,17 @@ template<typename DataType> int find_photons(DataType *image, uint16_t *out, siz
                     if (!(*out_p & CENT_PIXEL)){ 
                         *out_p = CENT_PIXEL; 
                         _p = out_p;
-                        _p -= box_val;
-                        _p -= (X * box_val);
+                        _p -= params.box;
+                        _p -= (X * params.box);
 
-                        for(size_t l=0;l<box_val_n;l++)
+                        for(size_t l=0;l<params.box_n;l++)
                         {
-                            for(size_t k=0;k<box_val_n;k++)
+                            for(size_t k=0;k<params.box_n;k++)
                             {
                                 (*_p)++;
                                 _p++;
                             }
-                            _p += (X - box_val_n);
+                            _p += (X - params.box_n);
                         }
                     }
                 }
@@ -311,14 +316,14 @@ template<typename DataType> int find_photons(DataType *image, uint16_t *out, siz
             out_p++; in_p++;
 
         }
-        for(size_t i=(X-box_val);i<X;i++)
+        for(size_t i=(X-params.box);i<X;i++)
         {
             *(out_p++) = 1;
             in_p++;
         }
     }
 
-    for(size_t j=Y-box_val;j<Y;j++)
+    for(size_t j=Y-params.box;j<Y;j++)
     {
         for(size_t i=0;i<X;i++)
         {

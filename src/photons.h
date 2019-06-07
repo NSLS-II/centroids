@@ -19,8 +19,16 @@
 /* ----------------------------------------------------------------------------*/
 template <typename DataType> struct centroid_params {
     int box;
+    int box_t;
+    int box_n;
     DataType threshold; 
 };
+
+enum {
+    CENTROIDS_PARAMS_OK = 0
+};
+
+template <typename DataType> int centroids_initialize_params(centroid_params<DataType> &params);
 
 template<typename DT> void swap(DT *a, DT *b);
 

@@ -13,6 +13,9 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
     centroid_params<uint16_t> params;
     params.box = box;
     params.threshold = threshold;
+
+    centroids_initialize_params(params);
+
     /* read input arrays buffer_info */
     py::buffer_info buf1 = images.request();
 
