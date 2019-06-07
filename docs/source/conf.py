@@ -45,7 +45,7 @@ extensions = [
 ]
 
 # Breathe docs
-breathe_projects = { "centroids": "../doxygen/xml/" }
+breathe_projects = {"centroids": "../doxygen/xml/"}
 breathe_default_project = "centroids"
 
 # Add any paths that contain templates here, relative to this directory.

@@ -4,6 +4,15 @@
 
 using namespace std;
 
+/* ----------------------------------------------------------------------------*/
+/**
+ * \brief Swap the values of two variables
+ *
+ * @tparam DT
+ * \param a Swap variable
+ * \param b Swap variable
+ */
+/* ----------------------------------------------------------------------------*/
 template<typename DT> void swap(DT *a, DT *b)
 {
 	DT t = *a;
@@ -11,6 +20,16 @@ template<typename DT> void swap(DT *a, DT *b)
     *b = t;
 }
 
+/* ----------------------------------------------------------------------------*/
+/**
+ * \brief Bubble sort values in decending order
+ *
+ * \param vals Pointer to array to sort
+ * \param x Pointer to x values to return sorted by vals
+ * \param y Pointer to y values to return sorted by vals
+ * \param n Number of elements in array
+ */
+/* ----------------------------------------------------------------------------*/
 void bubble_sort(double *vals, int *x, int *y, int n)
 {
     for (int i=0;i<(n-1);i++) 
@@ -27,6 +46,22 @@ void bubble_sort(double *vals, int *x, int *y, int n)
     }
 }
 
+/* ----------------------------------------------------------------------------*/
+/**
+ * \brief Process a single CCD image to find photons
+ *
+ * @tparam DataType
+ * \param image Pointer to image data
+ * \param out Pointer to store image 
+ * \param table 
+ * \param bias
+ * \param X
+ * \param Y
+ * \param params
+ *
+ * \returns   
+ */
+/* ----------------------------------------------------------------------------*/
 template<typename DataType> int process_image(DataType *image, uint16_t *out, double *table, double *bias,
         size_t X, size_t Y, centroid_params<DataType> params)
 {
@@ -115,7 +150,7 @@ template<typename DataType> int process_photons(DataType *image, uint16_t *out, 
 
     for(size_t j=0;j<Y;j++){
         for(size_t i=0;i<X;i++){
-            if((*out_p) & 0x8000)
+            if((*out_p) & CENT_PIXEL)
             {
                 // This is the central hot pixel
                 DataType *_ip = image_p;
@@ -252,10 +287,10 @@ template<typename DataType> int find_photons(DataType *image, uint16_t *out, siz
                 {
                     // Mark the image for duplicates
                     
-                    // Mark the center pixel using the bitwise value 0x8000
+                    // Mark the center pixel using the bitwise value CENT_PIXEL
                     // Increment 1 for each surrounding area
-                    if (!(*out_p && 0x8000)){ 
-                        *out_p = 0x8000; 
+                    if (!(*out_p & CENT_PIXEL)){ 
+                        *out_p = CENT_PIXEL; 
                         _p = out_p;
                         _p -= box_val;
                         _p -= (X * box_val);

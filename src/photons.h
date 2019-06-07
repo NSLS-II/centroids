@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-extern int _debug_print_flag;
-extern int _error_print_flag;
+#define CENT_PIXEL          0x8000
 
 #define DEBUG_PRINT(fmt, ...) \
   fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, __VA_ARGS__);
@@ -11,12 +10,20 @@ extern int _error_print_flag;
 #define DEBUG_COMMENT(fmt) \
   fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__, __LINE__, __func__); 
 
+/* ----------------------------------------------------------------------------*/
+/**
+ * \brief Parameters for controlling the photon counting algorythm
+ *
+ * \tparam DataType Data image datatype
+ */
+/* ----------------------------------------------------------------------------*/
 template <typename DataType> struct centroid_params {
     int box;
     DataType threshold; 
 };
 
 template<typename DT> void swap(DT *a, DT *b);
+
 void bubble_sort(double *vals, int *x, int *y, int n);
 
 template<typename DataType> int process_image(DataType *image, uint16_t *out, double *table, double *bias,
