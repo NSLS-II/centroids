@@ -28,11 +28,11 @@ void bubble_sort(double *vals, int *x, int *y, int n)
 }
 
 template<typename DataType> int process_image(DataType *image, uint16_t *out, double *table, double *bias,
-        size_t X, size_t Y, uint16_t threshold, int box)
+        size_t X, size_t Y, centroid_params<DataType> params)
 {
-	find_photons<DataType>(image, out, X, Y, threshold, box);
+	find_photons<DataType>(image, out, X, Y, params);
     process_bias<DataType>(image, out, X, Y, bias);
-    return process_photons<DataType>(image, out, table, X, Y, bias, box);
+    return process_photons<DataType>(image, out, table, X, Y, bias, params);
 }
 
 template<typename DataType> int process_bias(DataType *pixels, uint16_t *out, size_t X, size_t Y, double *bias)
@@ -97,8 +97,9 @@ int process_pixel(double *pixels, int *x, int *y, int n, double *com_x, double *
 }
 
 template<typename DataType> int process_photons(DataType *image, uint16_t *out, double *table, 
-        size_t X, size_t Y, double *bias, int box_val)
+        size_t X, size_t Y, double *bias, centroid_params<DataType> params)
 {
+    int box_val = params.box;
     int box_val_n = (box_val * 2) + 1;
     int box_val_t = box_val_n * box_val_n;
 
@@ -185,8 +186,11 @@ template<typename DataType> int process_photons(DataType *image, uint16_t *out, 
     return table_n;
 }
 
-template<typename DataType> int find_photons(DataType *image, uint16_t *out, size_t X, size_t Y, DataType threshold, int box_val)
+template<typename DataType> int find_photons(DataType *image, uint16_t *out, size_t X, size_t Y, 
+        centroid_params<DataType> params)
 {
+    DataType threshold = params.threshold;
+    int box_val = params.box;
     int box_val_n = (box_val * 2) + 1;
 
     uint16_t *out_p = out;
@@ -292,4 +296,4 @@ template<typename DataType> int find_photons(DataType *image, uint16_t *out, siz
 
 // Templates for common datatypes
 template int process_image<uint16_t>(uint16_t *image, uint16_t *out, double *table, double *bias,
-        size_t X, size_t Y, uint16_t threshold, int box);
+        size_t X, size_t Y, centroid_params<uint16_t> params);

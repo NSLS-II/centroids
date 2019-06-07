@@ -10,6 +10,9 @@ namespace py = pybind11;
 
 py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int box)
 {
+    centroid_params<uint16_t> params;
+    params.box = box;
+    params.threshold = threshold;
     /* read input arrays buffer_info */
     py::buffer_info buf1 = images.request();
 
@@ -41,7 +44,7 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
         table_ptr[i] = 0.0;
     }
 
-    int nphotons = process_image<uint16_t>(in_ptr, out_ptr, table_ptr, bias_ptr, X, Y, threshold, box);  
+    int nphotons = process_image<uint16_t>(in_ptr, out_ptr, table_ptr, bias_ptr, X, Y, params);
 
     /* Reshape result to have same shape as input */
     result.resize({Y, X});
