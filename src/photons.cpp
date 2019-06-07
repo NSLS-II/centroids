@@ -335,5 +335,6 @@ template<typename DataType> int find_photons(DataType *image, uint16_t *out, siz
 }
 
 // Templates for common datatypes
+template int centroids_initialize_params<uint16_t>(centroid_params<uint16_t> &params);
 template int process_image<uint16_t>(uint16_t *image, uint16_t *out, double *table, double *bias,
         size_t X, size_t Y, centroid_params<uint16_t> params);
