@@ -8,6 +8,8 @@ version.cpp
 docs/doxygen/xml
 docs/doxygen/html
 docs/doxygen/latex
+*.txt
+*.h5
 #
 # Byte-compiled / optimized / DLL files
 __pycache__/
