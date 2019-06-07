@@ -69,9 +69,9 @@ jobs:
             mkdir ~/.ssh && mv $DOWNLOADSECUREFILE_SECUREFILEPATH ~/.ssh/id_rsa
             chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_rsa
             ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
-            git remote set-url --push origin git@github.com:NSLS-II/centroids.git
-            git config --global --add url."git@github.com:".insteadOf "https://github.com/"
-            gh-pages --dotfiles=true --dist docs/build/html
+            #git remote set-url --push origin git@github.com:NSLS-II/centroids.git
+            #git config --global --add url."git@github.com:".insteadOf "https://github.com/"
+            gh-pages --repo=git@github.com:NSLS-II/centroids.git --dotfiles=true --dist docs/build/html
           displayName: Publish to GitHub Pages
           condition: |
               not(eq(variables['Build.Reason'], 'PullRequest'))
