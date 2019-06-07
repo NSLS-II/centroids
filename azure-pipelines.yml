@@ -4,7 +4,7 @@
 # https://aka.ms/yaml
 
 jobs:
-  - job: 'Test'
+  - job: 'Build_Test'
     pool:
       vmImage: 'ubuntu-latest'
     strategy:
@@ -45,3 +45,35 @@ jobs:
             pytest tests --doctest-modules --junitxml=junit/test-results.xml \
                 --cov=com --cov-report=xml --cov-report=html
         displayName: 'Test with pytest'
+
+  - job: 'Build_Docs'
+    pool:
+        vmImage: 'ubuntu-latest'
+    steps:
+        - task: DownloadSecureFile@1
+          inputs:
+              secureFile: deploy_key
+          displayName: 'Get the deploy key'
+        - task: UsePythonVersion@0
+          inputs:
+              versionSpec: '3.6'
+              architecture: 'x64'
+        - script: |
+            python -m pip install sphinx
+            sudo npm install -g gh-pages
+            git config user.email "ci-build@bnl.gov"
+            git config user.name "ci-build"
+          displayName: Install Deps
+        - script: |
+            cd docs
+            make html
+          displayName: Build Docs
+        - script: |
+            mkdir ~/.ssh && mv $DOWNLOADSECUREFILE_SECUREFILEPATH ~/.ssh/id_rsa
+            chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+            git remote set-url --push origin git@github.com:NSLS-II/centroids.git
+            gh-pages --dist docs/build/html
+          displayName: Publish to GitHub Pages
+          condition: |
+              not(eq(variables['Build.Reason'], 'PullRequest'))
