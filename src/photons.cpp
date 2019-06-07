@@ -27,12 +27,12 @@ void bubble_sort(double *vals, int *x, int *y, int n)
     }
 }
 
-int find_photons_uint16(uint16_t *image, uint16_t *out, double *table, double *bias,
+template<typename DataType> int process_image(DataType *image, uint16_t *out, double *table, double *bias,
         size_t X, size_t Y, uint16_t threshold, int box)
 {
-	find_photons<uint16_t>(image, out, X, Y, threshold, box);
-    process_bias<uint16_t>(image, out, X, Y, bias);
-    return process_photons<uint16_t>(image, out, table, X, Y, bias, box);
+	find_photons<DataType>(image, out, X, Y, threshold, box);
+    process_bias<DataType>(image, out, X, Y, bias);
+    return process_photons<DataType>(image, out, table, X, Y, bias, box);
 }
 
 template<typename DataType> int process_bias(DataType *pixels, uint16_t *out, size_t X, size_t Y, double *bias)
@@ -290,3 +290,6 @@ template<typename DataType> int find_photons(DataType *image, uint16_t *out, siz
 	return 0;
 }
 
+// Templates for common datatypes
+template int process_image<uint16_t>(uint16_t *image, uint16_t *out, double *table, double *bias,
+        size_t X, size_t Y, uint16_t threshold, int box);

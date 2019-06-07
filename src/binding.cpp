@@ -41,7 +41,7 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
         table_ptr[i] = 0.0;
     }
 
-    int nphotons = find_photons_uint16(in_ptr, out_ptr, table_ptr, bias_ptr, X, Y, threshold, box);  
+    int nphotons = process_image<uint16_t>(in_ptr, out_ptr, table_ptr, bias_ptr, X, Y, threshold, box);  
 
     /* Reshape result to have same shape as input */
     result.resize({Y, X});
