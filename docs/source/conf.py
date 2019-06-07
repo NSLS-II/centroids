@@ -14,16 +14,16 @@
 #
 # import os
 # import sys
+from subprocess import Popen, PIPE
+import sphinx_bootstrap_theme
+
 # sys.path.insert(0, os.path.abspath('.'))
-
-
 # -- Project information -----------------------------------------------------
 
 project = 'centroids'
 copyright = '2019, Stuart B. Wilkins'
 author = 'Stuart B. Wilkins'
 
-from subprocess import Popen, PIPE
 pipe = Popen('git describe --tags --always', stdout=PIPE, shell=True)
 git = pipe.stdout.read().decode("utf-8").rstrip()
 release = git.lstrip('R')
@@ -77,8 +77,6 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-#html_theme = 'alabaster'
-import sphinx_bootstrap_theme
 html_theme = 'bootstrap'
 html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
