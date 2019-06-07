@@ -55,7 +55,7 @@ jobs:
               secureFile: deploy_key
           displayName: 'Get the deploy key'
         - script: |
-            pip install sphinx
+            python -m pip instal sphinx
             npm install gh-pages
             git config user.email "ci-build@bnl.gov"
             git config user.name "ci-build"
