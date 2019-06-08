@@ -56,7 +56,7 @@ jobs:
         - script: |
             python -m pip install sphinx sphinx-bootstrap-theme breathe
             sudo npm install -g gh-pages
-            sudo apt-get install flex
+            sudo apt-get install flex bison
             git config user.email "ci-build@bnl.gov"
             git config user.name "ci-build"
           displayName: Install Deps
