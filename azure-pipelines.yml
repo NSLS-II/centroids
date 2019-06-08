@@ -59,7 +59,7 @@ jobs:
             git config user.email "ci-build@bnl.gov"
             git config user.name "ci-build"
           displayName: Install Deps
-        - bash: |
+        - script: |
             export DOXYGEN_VER=1.8.15
             export DOXYGEN_TAR=${DOXYGEN_VER}.linux.bin.tar.gz
             export DOXYGEN_URL="https://downloads.sourceforge.net/project/doxygen/rel-${DOXYGEN_VER}/doxygen-${DOXYGEN_VER}.src.tar.gz"
