@@ -14,7 +14,9 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
     params.box = box;
     params.threshold = threshold;
     params.pixel_photon_num = 10;
-    params.pixel_bgnd_num = 10;
+    params.overlap_max = 0;
+    params.sum_min = 800;
+    params.sum_max = 1200;
 
     centroids_initialize_params<uint16_t>(params);
 
@@ -27,7 +29,7 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
 
     // Allcoate the table buffer
    
-    int box_total = (2 * box + 1) * (2 * box + 1);
+    int box_total = params.box_t;
     py::array_t<double> table = py::array_t<double>(100000 * (box_total + 8));
     py::buffer_info buf3 = table.request();
 
@@ -39,8 +41,9 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
     uint16_t *out_ptr = (uint16_t*)buf2.ptr;
     double *table_ptr = (double*)buf3.ptr;
     double *bias_ptr = (double*)buf4.ptr;
-    size_t X = buf1.shape[1];
-    size_t Y = buf1.shape[0];
+    size_t X = buf1.shape[2];
+    size_t Y = buf1.shape[1];
+    size_t N = buf1.shape[0];
 
     // Blank the table
 
@@ -49,11 +52,11 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
         table_ptr[i] = 0.0;
     }
 
-    int nphotons = centroids_process<uint16_t>(in_ptr, out_ptr, table_ptr, bias_ptr, X, Y, params);
+    int nphotons = centroids_process<uint16_t>(in_ptr, out_ptr, table_ptr, bias_ptr, X, Y, N, params);
 
     /* Reshape result to have same shape as input */
-    result.resize({Y, X});
-    bias.resize({Y, X});
+    result.resize({N, Y, X});
+    bias.resize({N, Y, X});
     table.resize({nphotons, 8 + box_total});
 
     py::tuple args = py::make_tuple(table, result, bias);

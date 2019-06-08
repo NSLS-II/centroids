@@ -23,7 +23,7 @@ template <typename DataType> int centroids_initialize_params(centroid_params<Dat
 /* ----------------------------------------------------------------------------*/
 template<typename DT> void _swap(DT *a, DT *b)
 {
-	DT t = *a;
+    DT t = *a;
     *a = *b;
     *b = t;
 }
@@ -71,14 +71,40 @@ void _bubble_sort(double *vals, int *x, int *y, int n)
  */
 /* ----------------------------------------------------------------------------*/
 template<typename DataType> int centroids_process(DataType *image, uint16_t *out, double *table, double *bias,
-        size_t X, size_t Y, centroid_params<DataType> params)
+        size_t X, size_t Y, size_t N, centroid_params<DataType> params)
 {
-	centroids_find_photons<DataType>(image, out, X, Y, params);
-    centroids_process_bias<DataType>(image, out, X, Y, bias);
-    return centroids_process_photons<DataType>(image, out, table, X, Y, bias, params);
+    int nphotons = 0;
+    DataType *image_p = image;
+    uint16_t *out_p = out;
+    double *table_p = table;
+    double *bias_p = bias;
+
+    // Make the arrays for each image
+    photons<DataType> map[params.box_t * 10000];
+    photons<DataType> *map_p = map;
+
+    for(int n=0;n<N;n++)
+    {
+        int n_photons;
+
+        n_photons = centroids_find_photons<DataType>(image_p, out_p, map_p, X, Y, params); 
+        
+        DEBUG_PRINT("find_photons returns %d (%d)\n", n_photons, n);
+        
+        n_photons = centroids_process_photons<DataType>(map_p, table_p, n_photons, params);
+
+        image_p += (X * Y);
+        out_p += (X * Y);
+        bias_p += (X * Y);
+        table_p += n_photons * (params.box_t + CENTROIDS_TABLE_COLS);
+        nphotons += n_photons;
+    }
+
+    return nphotons;
 }
 
-template<typename DataType> int centroids_process_bias(DataType *pixels, uint16_t *out, size_t X, size_t Y, double *bias)
+template<typename DataType> int centroids_process_bias(DataType *pixels, uint16_t *out, double *bias, 
+        size_t X, size_t Y)
 {
     DataType *pix_p = pixels;
     uint16_t *out_p = out;
@@ -139,115 +165,110 @@ int _calculate_com(double *pixels, int *x, int *y, double *com_x, double *com_y,
     return 0;
 }
 
-template<typename DataType> int centroids_process_photons(DataType *image, uint16_t *out, double *table, 
-        size_t X, size_t Y, double *bias, centroid_params<DataType> params)
+template<typename DataType> int centroids_process_photons(photons<DataType> *photon_map,
+        double *photon_table, int n_photons, centroid_params<DataType> params)
 {
     int xvals[params.box_t];
     int yvals[params.box_t];
     double pixel_cluster[params.box_t];
-    
-    DataType *image_p = image;
-    uint16_t *out_p = out;
-    double *table_p = table;
-    double *bias_p = bias;
+
+    photons<DataType> *map_p = photon_map;
+    double *table_p = photon_table;
+
     int table_n = 0;
 
-    for(size_t j=0;j<Y;j++){
-        for(size_t i=0;i<X;i++){
-            if((*out_p) & CENT_PIXEL)
+    for(int n=0;n<n_photons;n++)
+    {
+        DEBUG_PRINT("n = %d\n", n);
+        int box_sum = -params.box_t;
+        for(int m=0; m<params.box_t; m++)
+        {
+            box_sum += (*(map_p[m].out) & 0x7FFF);
+            pixel_cluster[m] = (double)*(map_p[m].image);
+            DEBUG_PRINT("pixel = %d\n", (int)pixel_cluster[m]);
+            xvals[m] = map_p[m].x; 
+            yvals[m] = map_p[m].y; 
+        }
+
+        int i = xvals[params.box_t / 2];
+        int j = yvals[params.box_t / 2];
+
+        DEBUG_PRINT("i = %d, j = %d\n", i, j);
+        DEBUG_PRINT("box_sum = %d\n", box_sum);
+
+        if(box_sum <= params.overlap_max)
+        {
+            double comx, comy;
+
+            _bubble_sort(pixel_cluster, xvals, yvals, params.box_t);
+
+            // Now we process background
+            double bgnd = 0;
+            for(int n=params.pixel_photon_num;n<params.box_t;n++)
             {
-                // This is the central hot pixel
-                DataType *_ip = image_p;
-                _ip -= params.box;
-                _ip -= (X * params.box);
+                bgnd += pixel_cluster[n];
+            }
+            bgnd /= (params.box_t - params.pixel_photon_num);
+            DEBUG_PRINT("Pixel bgnd = %lf\n", bgnd);
 
-                uint16_t *_op = out_p;
-                _op -= params.box;
-                _op -= (X * params.box);
-
-                double *_pix = pixel_cluster;
-                int *_xvals = xvals;
-                int *_yvals = yvals;
-
-                bool flag = true;
-
-                uint16_t box_sum = 0;
-                for(int l=-params.box;l<=params.box;l++)
-                {
-                    for(int k=-params.box;k<=params.box;k++)
-                    {
-                        box_sum += (*(_op++) & 0x7FFF);
-                        *(_pix++) = *(_ip++) - *bias_p;
-                        *(_xvals++) = k;
-                        *(_yvals++) = l;
-                    }
-                    _ip += (X - params.box_n);
-                    _op += (X - params.box_n);
-                }
-
-                if(1) // setup for choosing if to process
-                {
-                    // We have a valid pixel.
-
-                    double comx, comy;
-                    double sum = 0, bgnd = 0;
-
-                    _bubble_sort(pixel_cluster, xvals, yvals, params.box_t);
-
-                    // Now we process background and sum
-                    for(int n=0;n<params.pixel_photon_num;n++)
-                    {
-                        sum += pixel_cluster[n];
-                    }
-
-                    for(int n=params.pixel_photon_num;n<params.box_t;n++)
-                    {
-                        bgnd += pixel_cluster[n];
-                    }
-                    // The background is an average
-                    bgnd /= params.box_t - params.pixel_photon_num;
-
-                    _calculate_com(pixel_cluster, xvals, yvals,
-                            &comx, &comy, params.box_t);
-    
-                    table_n++;
-                    table_p[0] = i;  
-                    table_p[1] = j;  
-                    table_p[2] = comx + i;
-                    table_p[3] = comy + j;
-                    table_p[4] = sum - bgnd;
-                    table_p[5] = bgnd;
-                    table_p[6] = box_sum - params.box_t;
-                    for(int n=0;n<9;n++)
-                    {
-                        table_p[7] += pixel_cluster[n];
-                    }
-
-                    for(int n=0;n<params.box_t;n++)
-                    {
-                        table_p[8 + n] = pixel_cluster[n];
-                    }
-
-                    table_p += params.box_t + 8;
-                }
+            for(int n=0;n<params.box_t;n++)
+            {
+                pixel_cluster[n] -= bgnd;
             }
 
-            image_p++;
-            out_p++;
-            bias_p++;
-        } // fox X
-    } // for Y
+            // Now process sum
+            double sum = 0;
+            for(int n=0;n<params.pixel_photon_num;n++)
+            {
+                sum += pixel_cluster[n];
+            }
+
+            DEBUG_PRINT("Pixel sum = %lf\n", sum);
+
+            // Now check sum
+            if((sum >= params.sum_min)  &&
+               (sum < params.sum_max))
+            {
+
+                // Calculate the COM
+                _calculate_com(pixel_cluster, xvals, yvals,
+                        &comx, &comy, params.box_t);
+
+                table_n++;
+                table_p[0] = i;  
+                table_p[1] = j;  
+                table_p[2] = comx + i;
+                table_p[3] = comy + j;
+                table_p[4] = sum;
+                table_p[5] = bgnd;
+                table_p[6] = box_sum;
+                table_p[7] = 0;
+
+                for(int n=0;n<params.box_t;n++)
+                {
+                    table_p[8 + n] = pixel_cluster[n];
+                }
+
+                table_p += (params.box_t + CENTROIDS_TABLE_COLS);
+
+            } // sum is correct
+        } // overlap is correct
+        map_p += params.box_t;
+    }
+
+    DEBUG_PRINT("table_n = %d\n", table_n);
 
     return table_n;
 }
 
-template<typename DataType> int centroids_find_photons(DataType *image, uint16_t *out, size_t X, size_t Y, 
-        centroid_params<DataType> params)
+template<typename DataType> int centroids_find_photons(DataType *image, uint16_t *out, 
+        photons<DataType> *photon_map, size_t X, size_t Y, centroid_params<DataType> params)
 {
-    DataType threshold = params.threshold;
-
     uint16_t *out_p = out;
     DataType *in_p = image;
+    photons<DataType> *map_p = photon_map;
+
+    int n_photons = 0;
 
     // Blank the output
     for(size_t i=0;i<(X* Y);i++)
@@ -271,64 +292,89 @@ template<typename DataType> int centroids_find_photons(DataType *image, uint16_t
             *(out_p++) = 1;
             in_p++;
         }
+
         for(size_t i=params.box;i<(X-params.box);i++)
         {
             // This is the main routine. 
             // Is this pixel above threshold
-            if(*in_p >= threshold)
+            if(*in_p >= params.threshold)
             {
+                DEBUG_PRINT("Pixel above threshold (%d, %d)\n", (int)i, (int)j);
                 // Check if this is the highest pixel
                 // Rewind by 1 params.box in X and 1 params.box in Y
-                DataType *_p;
-                
-                _p = in_p;
-                _p -= params.box;
-                _p -= (X * params.box);
+                DataType *_in_p = in_p;
+                _in_p -= (params.box + (X * params.box));
 
                 int flag = 1;
                 for(size_t l=0;l<params.box_n;l++)
                 {
                     for(size_t k=0;k<params.box_n;k++)
                     {
-                        if(*_p > *in_p)
+                        if(*_in_p > *in_p)
                         {
                             // We are not the highest pixel, set the flag
                             flag = 0;
+                            break;
                         }
 
-                        _p++;
+                        _in_p++;
                     }
-                    _p += (X - params.box_n);
+
+                    if(!flag)
+                    {
+                        break;
+                    }
+
+                    _in_p += (X - params.box_n);
                 }
 
                 if(flag)
                 {
+                    DEBUG_PRINT("Found pixel above thresh at (%ld, %ld)\n", i, j);
+
+                    // We are the highest pixel
                     // Mark the image for duplicates
-                    
-                    // Mark the center pixel using the bitwise value CENT_PIXEL
+
+                    // Mark the center pixel using the bitwise value CENTROIDS_CENT_PIXEL
                     // Increment 1 for each surrounding area
-                    if (!(*out_p & CENT_PIXEL)){ 
-                        *out_p = CENT_PIXEL; 
-                        _p = out_p;
-                        _p -= params.box;
-                        _p -= (X * params.box);
+                    *out_p |= CENTROIDS_CENT_PIXEL; 
 
-                        for(size_t l=0;l<params.box_n;l++)
+                    // Increment photon counter
+                    n_photons++;
+
+                    // Now set the pointers for dealing with the box
+                    uint16_t *_out_p = out_p;
+                    _out_p = out_p - (params.box + (X * params.box));
+                    _in_p = in_p - (params.box + (X * params.box));
+
+                    // Loop over the box
+                    for(int l=-params.box;l<=params.box;l++)
+                    {
+                        for(int k=-params.box;k<=params.box;k++)
                         {
-                            for(size_t k=0;k<params.box_n;k++)
-                            {
-                                (*_p)++;
-                                _p++;
-                            }
-                            _p += (X - params.box_n);
+                            // Store the photon map values
+                            map_p->x = i + k;
+                            map_p->y = j + l;
+                            map_p->image = _in_p;
+                            map_p->out = _out_p;
+                            DEBUG_PRINT("pixel = %d\n", (int)*_in_p);
+
+                            // Increment the out value
+                            (*_out_p)++;
+
+                            // Increment pointers
+                            _in_p++;
+                            _out_p++;
+                            map_p++;
                         }
+                        _out_p += (X - params.box_n);
+                        _in_p += (X - params.box_n);
                     }
-                }
-            }
-
+                } // if(flag)
+            } // if(threshold)
             out_p++; in_p++;
-
         }
+
         for(size_t i=(X-params.box);i<X;i++)
         {
             *(out_p++) = 1;
@@ -344,10 +390,10 @@ template<typename DataType> int centroids_find_photons(DataType *image, uint16_t
             in_p++;
         }
     }
-	return 0;
+    return n_photons;
 }
 
 // Templates for common datatypes
 template int centroids_initialize_params<uint16_t>(centroid_params<uint16_t> &params);
 template int centroids_process<uint16_t>(uint16_t *image, uint16_t *out, double *table, double *bias,
-        size_t X, size_t Y, centroid_params<uint16_t> params);
+        size_t X, size_t Y, size_t N, centroid_params<uint16_t> params);
