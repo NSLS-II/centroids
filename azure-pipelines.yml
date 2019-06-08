@@ -68,9 +68,7 @@ jobs:
             wget -O - "${DOXYGEN_URL}" | tar xzf - -C ${TMP_DIR}
             cd ${TMP_DIR}/doxygen-${DOXYGEN_VER}
             mkdir build && cd build
-            cmake -G "Unix Makefiles" \
-                -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
-	            ..
+            cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ..
             make 
             make install
           displayName: Build and Install Doxygen
