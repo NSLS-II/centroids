@@ -75,7 +75,7 @@ jobs:
           displayName: Build and Install Doxygen
         - bash: |
             cd docs/doxygen
-            /tmp/doxygen/bin/doxygen/doxygen
+            /tmp/doxygen/bin/doxygen
           displayName: Build Doxygen Docs
         - script: |
             cd docs
