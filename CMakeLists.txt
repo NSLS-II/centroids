@@ -17,8 +17,10 @@ pybind11_add_module(pycentroids
 	src/binding.cpp src/photons.cpp src/photons.h 
 	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
+target_compile_options(pycentroids PRIVATE -Werror -pedantic -Wall -Wextra)
 
 add_library(centroids 
 	src/photons.cpp src/photons.h 
 	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
+target_compile_options(centroids PRIVATE -Werror -pedantic -Wall -Wextra)

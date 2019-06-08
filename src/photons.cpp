@@ -80,16 +80,16 @@ template<typename DataType> int centroids_process(DataType *image, uint16_t *out
     double *bias_p = bias;
 
     // Make the arrays for each image
-    photons<DataType> map[params.box_t * 10000];
+    photons<DataType> *map = new photons<DataType> [params.box_t * 10000];
     photons<DataType> *map_p = map;
 
-    for(int n=0;n<N;n++)
+    for(size_t n=0;n<N;n++)
     {
         int n_photons;
 
         n_photons = centroids_find_photons<DataType>(image_p, out_p, map_p, X, Y, params); 
         
-        DEBUG_PRINT("find_photons returns %d (%d)\n", n_photons, n);
+        DEBUG_PRINT("find_photons returns %d (%ld)\n", n_photons, n);
         
         n_photons = centroids_process_photons<DataType>(map_p, table_p, n_photons, params);
 
@@ -100,6 +100,7 @@ template<typename DataType> int centroids_process(DataType *image, uint16_t *out
         nphotons += n_photons;
     }
 
+    delete[] map;
     return nphotons;
 }
 
@@ -168,9 +169,9 @@ int _calculate_com(double *pixels, int *x, int *y, double *com_x, double *com_y,
 template<typename DataType> int centroids_process_photons(photons<DataType> *photon_map,
         double *photon_table, int n_photons, centroid_params<DataType> params)
 {
-    int xvals[params.box_t];
-    int yvals[params.box_t];
-    double pixel_cluster[params.box_t];
+    int *xvals = new int [params.box_t];
+    int *yvals = new int [params.box_t];
+    double *pixel_cluster = new double [params.box_t];
 
     photons<DataType> *map_p = photon_map;
     double *table_p = photon_table;
@@ -258,6 +259,9 @@ template<typename DataType> int centroids_process_photons(photons<DataType> *pho
 
     DEBUG_PRINT("table_n = %d\n", table_n);
 
+    delete[] xvals;
+    delete[] yvals;
+    delete[] pixel_cluster;
     return table_n;
 }
 
@@ -277,7 +281,7 @@ template<typename DataType> int centroids_find_photons(DataType *image, uint16_t
     }
 
     // Start loop through image, we need to skip by params.box
-    for(size_t j=0;j<params.box;j++)
+    for(size_t j=0;j<(size_t)params.box;j++)
     {
         for(size_t i=0;i<X;i++)
         {
@@ -286,8 +290,8 @@ template<typename DataType> int centroids_find_photons(DataType *image, uint16_t
         }
     }
 
-    for(size_t j=params.box;j<(Y-params.box);j++){
-        for(size_t i=0;i<params.box;i++)
+    for(size_t j=params.box;j<(Y-(size_t)params.box);j++){
+        for(size_t i=0;i<(size_t)params.box;i++)
         {
             *(out_p++) = 1;
             in_p++;
@@ -306,9 +310,9 @@ template<typename DataType> int centroids_find_photons(DataType *image, uint16_t
                 _in_p -= (params.box + (X * params.box));
 
                 int flag = 1;
-                for(size_t l=0;l<params.box_n;l++)
+                for(size_t l=0;l<(size_t)params.box_n;l++)
                 {
-                    for(size_t k=0;k<params.box_n;k++)
+                    for(size_t k=0;k<(size_t)params.box_n;k++)
                     {
                         if(*_in_p > *in_p)
                         {
