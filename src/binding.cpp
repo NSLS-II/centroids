@@ -11,6 +11,8 @@ namespace py = pybind11;
 py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int box)
 {
     centroid_params<uint16_t> params;
+    centroids_initialize_params<uint16_t>(params);
+
     params.box = box;
     params.threshold = threshold;
     params.pixel_photon_num = 10;
@@ -18,7 +20,7 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
     params.sum_min = 800;
     params.sum_max = 1200;
 
-    centroids_initialize_params<uint16_t>(params);
+    centroids_calculate_params<uint16_t>(params);
 
     /* read input arrays buffer_info */
     py::buffer_info buf1 = images.request();
@@ -28,38 +30,41 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
     py::buffer_info buf2 = result.request();
 
     // Allcoate the table buffer
-   
-    int box_total = params.box_t;
-    py::array_t<double> table = py::array_t<double>(100000 * (box_total + 8));
-    py::buffer_info buf3 = table.request();
-
-    /* allocate the bias buffer */
-    py::array_t<double> bias = py::array_t<uint16_t>(buf1.size);
-    py::buffer_info buf4 = bias.request();
 
     uint16_t *in_ptr = (uint16_t*)buf1.ptr;
     uint16_t *out_ptr = (uint16_t*)buf2.ptr;
-    double *table_ptr = (double*)buf3.ptr;
-    double *bias_ptr = (double*)buf4.ptr;
     size_t X = buf1.shape[2];
     size_t Y = buf1.shape[1];
     size_t N = buf1.shape[0];
 
-    // Blank the table
+    PhotonTablePtr<double> photon_table(new PhotonTable<double>);
 
-    for(int i=0;i<100000*(8 + box_total);i++)
+    int nphotons = centroids_process<uint16_t, double>(in_ptr, out_ptr, photon_table, X, Y, N, params);
+
+    py::array_t<double> table = py::array_t<double>(8 * nphotons);
+    py::buffer_info buf3 = table.request();
+    double *table_ptr = (double*)buf3.ptr;
+
+    // This is not so good, we now do a copy into the memory`
+    for(auto table = photon_table->begin(); 
+        table != photon_table->end(); 
+        table++)
     {
-        table_ptr[i] = 0.0;
+        *(table_ptr++) = table->x;
+        *(table_ptr++) = table->y;
+        *(table_ptr++) = table->com_x;
+        *(table_ptr++) = table->com_y;
+        *(table_ptr++) = table->sum;
+        *(table_ptr++) = table->bgnd;
+        *(table_ptr++) = table->box_sum;
+        *(table_ptr++) = 0;
     }
-
-    int nphotons = centroids_process<uint16_t>(in_ptr, out_ptr, table_ptr, bias_ptr, X, Y, N, params);
 
     /* Reshape result to have same shape as input */
     result.resize({N, Y, X});
-    bias.resize({N, Y, X});
-    table.resize({nphotons, 8 + box_total});
+    table.resize({nphotons, 8});
 
-    py::tuple args = py::make_tuple(table, result, bias);
+    py::tuple args = py::make_tuple(table, result);
     return args;
 }
 
