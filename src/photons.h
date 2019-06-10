@@ -95,9 +95,6 @@ int centroids_process(DataType *image, uint16_t *out,
         PhotonTablePtr<OutputType> &photon_table,
         size_t X, size_t Y, size_t N, centroid_params<DataType> params);
 
-template<typename DataType> int centroids_process_bias(DataType *pixels, uint16_t *out, double *bias, 
-        size_t X, size_t Y);
-
 template<typename DataType, typename OutputType> 
 size_t centroids_process_photons(
         PhotonMapPtr<DataType> &photon_map,

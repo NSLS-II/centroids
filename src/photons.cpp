@@ -81,7 +81,6 @@ void _bubble_sort(std::unique_ptr <DT[]> &vals,
  * \param image Pointer to image data
  * \param out Pointer to store image 
  * \param table 
- * \param bias
  * \param X
  * \param Y
  * \param params
@@ -368,45 +367,6 @@ size_t centroids_find_photons(DataType *image, uint16_t *out,
     }
     return photon_map->size();
 }
-
-template<typename DataType> int centroids_process_bias(DataType *pixels, uint16_t *out, double *bias, 
-        size_t X, size_t Y)
-{
-    DataType *pix_p = pixels;
-    uint16_t *out_p = out;
-    double *bias_p = bias;
-    
-    for(size_t j=0;j<Y;j++)
-    {
-        double _bias = 0;
-        size_t n = 0;
-
-        for(size_t i=0;i<X;i++)
-        {
-            if(*out_p == 0)
-            {
-                _bias += *pix_p;
-                n++;
-            }
-            out_p++;
-            pix_p++;
-        }
-        if(n)
-        {
-            _bias /= n;
-        } else {
-            _bias = 0;
-        }
-
-        for(size_t i=0;i<X;i++)
-        {
-            *(bias_p++) = _bias;
-        }
-    }
-
-    return 0;
-}
-
 
 // Templates for common datatypes
 template void centroids_initialize_params<uint16_t>(centroid_params<uint16_t> &params);
