@@ -121,7 +121,7 @@ int centroids_process(DataType *image, uint16_t *out,
         nphotons += n_photons;
     }
 
-    return nphotons;
+    return photon_table->size();
 }
 
 template <typename DT>
@@ -175,9 +175,6 @@ size_t centroids_process_photons(
                     (double)pixel_cluster[m], (int)xvals[m], (int)yvals[m]);
         }
 
-        //size_t i = xvals[params.box_t / 2];
-        //size_t j = yvals[params.box_t / 2];
-
         if(box_sum <= params.overlap_max)
         {
             double comx, comy;
@@ -226,18 +223,15 @@ size_t centroids_process_photons(
                         (double)comx, (double)comy, 
                         (double)xvals[0], (double)yvals[0]);
 
-                photon_table->push_back( {xvals[0], yvals[0], 
-                        comx, comy,
-                        sum, bgnd, 
-                        box_sum}
-                        );
+                //std::vector<OutputType> pixels;
+                auto pixels = std::make_shared<std::vector<OutputType>>(params.box_t);
+                for(int m=0; m<params.box_t; m++)
+                {
+                    pixels->push_back(*photon[m].image);
+                }
 
-                //for(int n=0;n<params.box_t;n++)
-                //{
-                //    table_p[8 + n] = pixel_cluster[n];
-                //}
-
-                //table_p += (params.box_t + CENTROIDS_TABLE_COLS);
+                photon_table->push_back({xvals[0], yvals[0], comx, comy,
+                        sum, bgnd, box_sum, pixels});
 
             } // sum is correct
         } // overlap is correct

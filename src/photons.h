@@ -56,6 +56,11 @@ template <typename DataType> struct photons {
     size_t y;
 };
 
+template<typename T>
+using PixelValues = std::vector<T>;
+template<typename T>
+using PixelValuesPtr = std::shared_ptr<PixelValues<T>>;
+
 template <typename OutputType> struct photon_params {
     OutputType x;
     OutputType y;
@@ -64,7 +69,7 @@ template <typename OutputType> struct photon_params {
     OutputType sum;
     OutputType bgnd;
     int box_sum;
-    //std::vector<OutputType> values;
+    PixelValuesPtr<OutputType> values;
 };
 
 enum {
