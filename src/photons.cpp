@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stdlib.h>
-#include <iostream>
 #include <vector>
 #include <memory>
 #include "photons.h"
@@ -228,8 +227,9 @@ size_t centroids_process_photons(
                 auto pixels = std::make_shared<std::vector<OutputType>>(params.box_t);
                 for(int m=0; m<params.box_t; m++)
                 {
-                    pixels->push_back(*photon[m].image);
+                    (*pixels)[m] = *photon[m].image;
                 }
+                fprintf(stderr, "pixels.size() = %ld\n", pixels->size());
 
                 photon_table->push_back({xvals[0], yvals[0], comx, comy,
                         sum, bgnd, box_sum, pixels});

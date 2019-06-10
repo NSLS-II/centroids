@@ -44,11 +44,11 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
     size_t nphotons = centroids_process<uint16_t, double>(in_ptr, out_ptr, photon_table, X, Y, N, params);
     fprintf(stderr, "nphotons = %ld\n", nphotons);
 
-    py::array_t<double> table = py::array_t<double>(8 * nphotons);
+    py::array_t<double> table = py::array_t<double>((8 + params.box_t) * nphotons);
     py::buffer_info buf3 = table.request();
     double *table_ptr = (double*)buf3.ptr;
 
-    // This is not so good, we now do a copy into the memory`
+    // This is not so good, we now do a copy into the memory
     for(auto table = photon_table->begin(); 
         table != photon_table->end(); 
         table++)
@@ -61,11 +61,17 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
         *(table_ptr++) = table->bgnd;
         *(table_ptr++) = table->box_sum;
         *(table_ptr++) = 0;
+        for(auto pixel = table->values->begin();
+                pixel != table->values->end();
+                pixel++)
+        {
+            *(table_ptr++) = *pixel;
+        }
     }
 
     /* Reshape result to have same shape as input */
     result.resize({N, Y, X});
-    table.resize({(int)nphotons, 8});
+    table.resize({(int)nphotons, 8 + params.box_t});
 
     py::tuple args = py::make_tuple(table, result);
     return args;
