@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <vector>
+#include <memory>
 
 #define CENTROIDS_CENT_PIXEL                  0x8000
 #define CENTROIDS_TABLE_COLS                  8

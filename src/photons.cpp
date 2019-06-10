@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <vector>
+#include <memory>
 #include "photons.h"
 
 using namespace std;
