@@ -2,7 +2,23 @@ cmake_minimum_required(VERSION 3.12)
 project(centroids)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_VERBOSE_MAKEFILE ON)
+option(PEDANTIC "Compile with pedantic warnings" ON)
+option(WERROR "Treat warnings as errors" OFF)
+option(DEBUG_OUTPUT "Print debug outout to stderr" ON)
+
+if(PEDANTIC)
+	add_compile_options(-pedantic -Wall -Wextra)
+endif()
+
+if(WERROR)
+	add_compile_options(-Werror)
+endif()
+
+if(DEBUG_OUTPUT)
+	add_compile_options("-DDEBUG_OUTPUT")
+endif()
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 
 # Add a custom command that produces version.cpp, plus
 # a dummy output that's not actually produced, in order
@@ -18,10 +34,8 @@ pybind11_add_module(pycentroids
 	src/binding.cpp src/photons.cpp src/photons.h 
 	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
-target_compile_options(pycentroids PRIVATE -Werror -pedantic -Wall -Wextra)
 
 add_library(centroids 
 	src/photons.cpp src/photons.h 
 	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
-target_compile_options(centroids PRIVATE -Werror -pedantic -Wall -Wextra)
