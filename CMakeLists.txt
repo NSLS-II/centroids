@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project(centroids)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # Add a custom command that produces version.cpp, plus
 # a dummy output that's not actually produced, in order
