@@ -6,23 +6,122 @@
 
 using namespace std;
 
-template <typename DataType> void centroids_initialize_params(centroid_params<DataType> &params)
-{
-    params.box = 2;
-    params.box_n = 5;
-    params.box_t = 25;
 
-    params.pixel_photon_num = 9;
-    params.overlap_max = 0;
-    params.sum_min = 0;
-    params.sum_max = 10000;
-    params.threshold = 100;
+/* ----------------------------------------------------------------------------*/
+/**
+ * \brief 
+ *
+ * @tparam OT
+ * param lut
+ * param start
+ * param stop
+ * param points
+ *
+ * Returns   
+ */
+/* ----------------------------------------------------------------------------*/
+template <typename OT>
+int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
+                             OT start, OT stop, size_t points)
+{
+    lut->start = start;
+    lut->n_points = points + 1;
+    lut->step = (stop - start) / lut->n_points;
+
+    lut = data(new OT[lut->n_points]);
+
+    return CENTROIDS_LUT_OK;
 }
 
-template <typename DataType> int centroids_calculate_params(centroid_params<DataType> &params)
+/* ----------------------------------------------------------------------------*/
+/**
+ * \brief 
+ *
+ * @tparam OT
+ * param lut
+ * param start
+ * param stop
+ * param points
+ *
+ * Returns   
+ */
+/* ----------------------------------------------------------------------------*/
+template <typename OT>
+int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> *lut,
+                                  OT start, OT stop, size_t points)
 {
-    params.box_n = (params.box * 2) + 1;
-    params.box_t = params.box_n * params.box_n;
+    int rtn = centroids_init_pixel_lut(lut, start, stop, points);
+    if(rtn)
+    {
+        return rtn;
+    }
+
+    for(int n=0;n<lut->n_points;n++)
+    {
+        lut[n] = start + n * lut->step;
+    }
+
+    return CENTROIDS_LUT_OK;
+}
+
+template <typename OT>
+int centroids_lookup_pixel_lut(centroids_pixel_lut<OT> *lut, 
+                               OT ival, OT *oval)
+{
+    OT pos = lut->step * (ival - lut->start);
+    if(pos < 0)
+    {
+        return CENTROIDS_LUT_RANGE_LOW;
+    }
+
+    size_t ipos = (size_t)pos; 
+    if(ipos >= lut->n_points)
+    {
+        return CENTROIDS_LUT_RANGE_HIGH;
+    }
+
+    *oval = lut->data[ipos];
+
+    return 0;
+}
+
+/* ----------------------------------------------------------------------------*/
+/**
+ * \brief Initialize the paramaters structure
+ *
+ * @tparam DT Type for input data to centroids
+ * param params Parameter structre
+ */
+/* ----------------------------------------------------------------------------*/
+template <typename DT, typename OT> 
+void centroids_initialize_params(centroid_params<DT, OT> *params)
+{
+    params->box = 2;
+    params->box_n = 5;
+    params->box_t = 25;
+
+    params->pixel_photon_num = 9;
+    params->overlap_max = 0;
+    params->sum_min = 0;
+    params->sum_max = 10000;
+    params->threshold = 100;
+}
+
+/* ----------------------------------------------------------------------------*/
+/**
+ * \brief Calculate values from initial input to parameters structure
+ *
+ * @tparam DT Type for input data to centroids
+ * param params Parameters structure
+ *
+ * Returns 0 if compute was correct, non-zero if an error occured
+ */
+/* ----------------------------------------------------------------------------*/
+template <typename DT, typename OT> 
+int centroids_calculate_params(centroid_params<DT, OT> *params)
+{
+    params->box_n = (params->box * 2) + 1;
+    params->box_t = params->box_n * params->box_n;
 
     return CENTROIDS_PARAMS_OK;
 }
@@ -37,7 +136,7 @@ template <typename DataType> int centroids_calculate_params(centroid_params<Data
  */
 /* ----------------------------------------------------------------------------*/
 template<typename DT> 
-void _swap(DT &a, DT &b)
+void centroids_swap(DT &a, DT &b)
 {
     DT t = a;
     a = b;
@@ -65,9 +164,9 @@ void _bubble_sort(std::unique_ptr <DT[]> &vals,
         {
             if (vals[j-1] < vals[j]) 
             {
-                _swap<DT>(vals[j-1], vals[j]);
-                _swap<DT>(x[j-1], x[j]);
-                _swap<DT>(y[j-1], y[j]);
+                centroids_swap<DT>(vals[j-1], vals[j]);
+                centroids_swap<DT>(x[j-1], x[j]);
+                centroids_swap<DT>(y[j-1], y[j]);
             }
         }
     }
@@ -77,7 +176,7 @@ void _bubble_sort(std::unique_ptr <DT[]> &vals,
 /**
  * \brief Process a single CCD image to find photons
  *
- * @tparam DataType
+ * @tparam DT
  * \param image Pointer to image data
  * \param out Pointer to store image 
  * \param table 
@@ -88,45 +187,46 @@ void _bubble_sort(std::unique_ptr <DT[]> &vals,
  * \returns   
  */
 /* ----------------------------------------------------------------------------*/
-template<typename DataType, typename OutputType>
-int centroids_process(DataType *image, uint16_t *out, 
-        PhotonTablePtr<OutputType> &photon_table,
-        size_t X, size_t Y, size_t N, centroid_params<DataType> params)
+template<typename DT, typename OT>
+size_t centroids_process(DT *image, uint16_t *out, 
+                         PhotonTablePtr<OT> &photon_table,
+                         size_t X, size_t Y, size_t N, 
+                         centroid_params<DT, OT> &params)
 {
-    int nphotons = 0;
-    DataType *image_p = image;
+    size_t n_photons = 0;
+    DT *image_p = image;
     uint16_t *out_p = out;
 
     // Make the arrays for each image
-    PhotonMapPtr<DataType> photon_map(new PhotonMap<DataType>);
+    PhotonMapPtr<DT> photon_map(new PhotonMap<DT>);
 
     // Allocate a single image
 
     DEBUG_COMMENT("Looping through images....\n");
     for(size_t n=0;n<N;n++)
     {
-        size_t n_photons;
+        size_t fphotons, pphotons;
+        fphotons = centroids_find_photons<DT, OT>(image_p, out_p, photon_map, X, Y, params); 
+        pphotons = centroids_process_photons<DT, OT>(photon_map, photon_table, params);
 
-        n_photons = centroids_find_photons<DataType>(image_p, out_p, photon_map, X, Y, params); 
-        
-        DEBUG_PRINT("find_photons returns %ld (%ld)\n", (unsigned long)n_photons, (unsigned long)n);
-        
-        n_photons = centroids_process_photons<DataType, OutputType>(photon_map, photon_table, params);
-
-        DEBUG_PRINT("process_photons returns %ld (%ld)\n", (unsigned long)n_photons, (unsigned long)n);
+        DEBUG_PRINT("Found %ld photons, processed %ld photons\n",(unsigned long)fphotons,
+                                                                 (unsigned long)pphotons);
 
         image_p += (X * Y);
         out_p += (X * Y);
-        nphotons += n_photons;
+        n_photons += pphotons;
     }
 
-    return photon_table->size();
+    DEBUG_PRINT("Found %ld photons\n", (unsigned long)n_photons);
+    DEBUG_PRINT("photon_map->size() = %ld\n", (unsigned long)photon_map->size());
+
+    return n_photons;
 }
 
 template <typename DT>
 int _calculate_com(std::unique_ptr <DT[]> &pixels, 
-        std::unique_ptr <DT[]> &x, std::unique_ptr <DT[]> &y, 
-        DT &com_x, DT &com_y, int n)
+                   std::unique_ptr <DT[]> &x, std::unique_ptr <DT[]> &y, 
+                   DT &com_x, DT &com_y, int n)
 {
     DT sum = 0;
 
@@ -146,18 +246,16 @@ int _calculate_com(std::unique_ptr <DT[]> &pixels,
     return 0;
 }
 
-template<typename DataType, typename OutputType>
-size_t centroids_process_photons(
-        PhotonMapPtr<DataType> &photon_map,
-        PhotonTablePtr<OutputType> &photon_table,
-        centroid_params<DataType> params)
+template<typename DT, typename OT>
+size_t centroids_process_photons(PhotonMapPtr<DT> &photon_map,
+                                 PhotonTablePtr<OT> &photon_table,
+                                 centroid_params<DT, OT> &params)
 {
-    //int *xvals = new int [params.box_t];
-    //int *yvals = new int [params.box_t];
-    //OutputType *pixel_cluster = new double [params.box_t];
-    std::unique_ptr<OutputType[]> pixel_cluster(new double[params.box_t]);
-    std::unique_ptr<OutputType[]> xvals(new double[params.box_t]);
-    std::unique_ptr<OutputType[]> yvals(new double[params.box_t]);
+    size_t n_photons = 0;
+
+    std::unique_ptr<OT[]> pixel_cluster(new OT[params.box_t]);
+    std::unique_ptr<OT[]> xvals(new OT[params.box_t]);
+    std::unique_ptr<OT[]> yvals(new OT[params.box_t]);
 
     for(auto photon = photon_map->begin(); 
         photon != photon_map->end(); 
@@ -176,13 +274,15 @@ size_t centroids_process_photons(
 
         if(box_sum <= params.overlap_max)
         {
-            double comx, comy;
+            OT comx = 0;
+            OT comy = 0;
+            OT sum = 0;
+            OT bgnd = 0;
 
             // Bubble sort values
-            _bubble_sort<OutputType>(pixel_cluster, xvals, yvals, params.box_t);
+            _bubble_sort<OT>(pixel_cluster, xvals, yvals, params.box_t);
 
             // Now we process background
-            double bgnd = 0;
             for(int n=params.pixel_photon_num;n<params.box_t;n++)
             {
                 bgnd += pixel_cluster[n];
@@ -197,7 +297,6 @@ size_t centroids_process_photons(
             }
 
             // Now process sum
-            double sum = 0;
             for(int n=0;n<params.pixel_photon_num;n++)
             {
                 sum += pixel_cluster[n];
@@ -216,39 +315,41 @@ size_t centroids_process_photons(
             {
 
                 // Calculate the COM
-                _calculate_com<OutputType>(pixel_cluster, xvals, yvals,
+                _calculate_com<OT>(pixel_cluster, xvals, yvals,
                         comx, comy, params.box_t);
                 DEBUG_PRINT("COM = %lf, %lf (%lf, %lf)\n", 
                         (double)comx, (double)comy, 
                         (double)xvals[0], (double)yvals[0]);
 
-                //std::vector<OutputType> pixels;
-                auto pixels = std::make_shared<std::vector<OutputType>>(params.box_t);
+                photon_table->insert(photon_table->end(), {xvals[0], xvals[1], 
+                                                           comx, comy, sum, bgnd,
+                                                           (OT)box_sum, 0});
                 for(int m=0; m<params.box_t; m++)
                 {
-                    (*pixels)[m] = *photon[m].image;
+                    photon_table->push_back(*photon[m].image);
                 }
-                fprintf(stderr, "pixels.size() = %ld\n", pixels->size());
 
-                photon_table->push_back({xvals[0], yvals[0], comx, comy,
-                        sum, bgnd, box_sum, pixels});
+                n_photons++;
 
             } // sum is correct
         } // overlap is correct
     }
 
     DEBUG_PRINT("Vector Size = %ld\n", (unsigned long)photon_table->size());
+    DEBUG_PRINT("n_photons = %ld\n", (unsigned long)n_photons);
     
-    return photon_table->size();
+    return n_photons;
 }
 
-template<typename DataType> 
-size_t centroids_find_photons(DataType *image, uint16_t *out, 
-        PhotonMapPtr<DataType> &photon_map,
-        size_t X, size_t Y, centroid_params<DataType> params)
+template<typename DT, typename OT> 
+size_t centroids_find_photons(DT *image, uint16_t *out, 
+                              PhotonMapPtr<DT> &photon_map,
+                              size_t X, size_t Y, 
+                              centroid_params<DT, OT> &params)
 {
     uint16_t *out_p = out;
-    DataType *in_p = image;
+    DT *in_p = image;
+    size_t n_photons = 0;
 
     // Blank the output
     for(size_t i=0;i<(X* Y);i++)
@@ -281,7 +382,7 @@ size_t centroids_find_photons(DataType *image, uint16_t *out,
             {
                 // Check if this is the highest pixel
                 // Rewind by 1 params.box in X and 1 params.box in Y
-                DataType *_in_p = in_p;
+                DT *_in_p = in_p;
                 _in_p -= (params.box + (X * params.box));
 
                 int flag = 1;
@@ -334,6 +435,7 @@ size_t centroids_find_photons(DataType *image, uint16_t *out,
                             DEBUG_PRINT("Storing pixel for (%d, %d) %p %p\n", 
                                     k, l, (void*)_in_p, (void*)_out_p);
                             photon_map->push_back({_in_p, _out_p, i + k, j + l});
+                            n_photons++;
 
                             // Increment the out value
                             (*_out_p)++;
@@ -365,13 +467,20 @@ size_t centroids_find_photons(DataType *image, uint16_t *out,
             in_p++;
         }
     }
-    return photon_map->size();
+    return n_photons;
 }
 
 // Templates for common datatypes
-template void centroids_initialize_params<uint16_t>(centroid_params<uint16_t> &params);
-template int centroids_calculate_params<uint16_t>(centroid_params<uint16_t> &params);
+template void centroids_initialize_params<uint16_t,double>(centroid_params<uint16_t,double> *params);
+template int centroids_calculate_params<uint16_t,double>(centroid_params<uint16_t,double> *params);
+template size_t centroids_process<uint16_t, double>(uint16_t *image, uint16_t *out, 
+                                                    PhotonTablePtr<double> &photon_table,
+                                                    size_t X, size_t Y, size_t N, 
+                                                    centroid_params<uint16_t,double> &params);
 
-template int centroids_process<uint16_t, double>(uint16_t *image, uint16_t *out, 
-        PhotonTablePtr<double> &photon_table,
-        size_t X, size_t Y, size_t N, centroid_params<uint16_t> params);
+template void centroids_initialize_params<uint16_t,float>(centroid_params<uint16_t,float> *params);
+template int centroids_calculate_params<uint16_t,float>(centroid_params<uint16_t,float> *params);
+template size_t centroids_process<uint16_t, float>(uint16_t *image, uint16_t *out, 
+                                                   PhotonTablePtr<float> &photon_table,
+                                                   size_t X, size_t Y, size_t N, 
+                                                   centroid_params<uint16_t,float> &params);

@@ -19,17 +19,32 @@
     do {} while (0)
 #endif
 
-
-
+/* ----------------------------------------------------------------------------*/
+/**
+ * \brief Data structre for pixel LUT 
+ *
+ * @tparam OT
+ */
+/* ----------------------------------------------------------------------------*/
+template <typename OT>
+struct centroids_pixel_lut
+{
+    std::unique_ptr<OT[]> data;
+    OT start;
+    OT step;
+    size_t n_points; 
+};
 
 /* ----------------------------------------------------------------------------*/
 /**
  * \brief Parameters for controlling the photon counting algorythm
  *
- * \tparam DataType Data image datatype
+ * \tparam DT Data image datatype
  */
 /* ----------------------------------------------------------------------------*/
-template <typename DataType> struct centroid_params {
+template <typename DT, typename OT> 
+struct centroid_params 
+{
     int box;
     int box_t;
     int box_n;
@@ -37,21 +52,22 @@ template <typename DataType> struct centroid_params {
     int overlap_max;
     double sum_min;
     double sum_max;
-    DataType threshold; 
+    DT threshold; 
     size_t x;
     size_t y;
     size_t n;
+    centroids_pixel_lut<OT> pixel_lut;
 };
 
 /* ----------------------------------------------------------------------------*/
 /**
  * \brief 
  *
- * @tparam DataType
+ * @tparam DT
  */
 /* ----------------------------------------------------------------------------*/
-template <typename DataType> struct photons {
-    DataType *image;
+template <typename DT> struct photons {
+    DT *image;
     uint16_t *out;
     size_t x;
     size_t y;
@@ -62,57 +78,79 @@ using PixelValues = std::vector<T>;
 template<typename T>
 using PixelValuesPtr = std::shared_ptr<PixelValues<T>>;
 
-template <typename OutputType> struct photon_params {
-    OutputType x;
-    OutputType y;
-    OutputType com_x;
-    OutputType com_y;
-    OutputType sum;
-    OutputType bgnd;
-    int box_sum;
-    PixelValuesPtr<OutputType> values;
-};
+//template <typename OT> struct photon_params {
+//    OT x;
+//    OT y;
+//    OT com_x;
+//    OT com_y;
+//    OT sum;
+//    OT bgnd;
+//    int box_sum;
+//    PixelValuesPtr<OT> values;
+//};
 
 enum {
     CENTROIDS_PARAMS_OK = 0,
     CENTROIDS_PARAMS_BAD = 1
 };
 
-template <typename DataType> 
-using PhotonTable = std::vector<photon_params<DataType>>;
-template <typename DataType> 
-using PhotonTablePtr = std::unique_ptr<PhotonTable<DataType>>;
-template <typename DataType> 
-using PhotonMap = std::vector<photons<DataType>>;
-template <typename DataType> 
-using PhotonMapPtr = std::unique_ptr<PhotonMap<DataType>>;
+enum {
+    CENTROIDS_LUT_OK = 0,
+    CENTROIDS_LUT_RANGE_LOW = 1,
+    CENTROIDS_LUT_RANGE_HIGH = 2
+};
 
-template <typename DataType> void centroids_initialize_params(centroid_params<DataType> &params);
-template <typename DataType> int centroids_calculate_params(centroid_params<DataType> &params);
+template <typename DT> 
+using PhotonTable = std::vector<DT>;
+template <typename DT> 
+using PhotonTablePtr = PhotonTable<DT>*;
+template <typename DT> 
+using PhotonMap = std::vector<photons<DT>>;
+template <typename DT> 
+using PhotonMapPtr = std::unique_ptr<PhotonMap<DT>>;
 
-template<typename DataType, typename OutputType>
-int centroids_process(DataType *image, uint16_t *out, 
-        PhotonTablePtr<OutputType> &photon_table,
-        size_t X, size_t Y, size_t N, centroid_params<DataType> params);
+template <typename DT, typename OT> 
+void centroids_initialize_params(centroid_params<DT, OT> *params);
 
-template<typename DataType, typename OutputType> 
-size_t centroids_process_photons(
-        PhotonMapPtr<DataType> &photon_map,
-        PhotonTablePtr<OutputType> &photon_table,
-        centroid_params<DataType> params);
+template <typename DT, typename OT> 
+int centroids_calculate_params(centroid_params<DT, OT> *params);
 
-template<typename DataType> 
-size_t centroids_find_photons(DataType *image, uint16_t *out, 
-        PhotonMapPtr<DataType> &photon_map,
-        size_t X, size_t Y, centroid_params<DataType> params);
+template <typename OT>
+int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
+                             OT start, OT stop, int points);
+
+template <typename OT>
+int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> *lut,
+                                  OT start, OT stop, int points);
+
+template <typename OT>
+int centroids_lookup_pixel_lut(centroids_pixel_lut<OT> *lut, 
+                               OT ival, OT *oval);
+
+template<typename DT, typename OT>
+size_t centroids_process(DT *image, uint16_t *out, 
+                         PhotonTablePtr<OT> &photon_table,
+                         size_t X, size_t Y, size_t N, 
+                         centroid_params<DT, OT> &params);
+
+template<typename DT, typename OT>
+size_t centroids_process_photons(PhotonMapPtr<DT> &photon_map,
+                                 PhotonTablePtr<OT> &photon_table,
+                                 centroid_params<DT, OT> &params);
+
+template<typename DT, typename OT> 
+size_t centroids_find_photons(DT *image, uint16_t *out, 
+                              PhotonMapPtr<DT> &photon_map,
+                              size_t X, size_t Y, 
+                              centroid_params<DT, OT> &params);
 
 template <typename DT>
 int _calculate_com(std::unique_ptr <DT[]> &pixels, 
-        std::unique_ptr <DT[]> &x, std::unique_ptr <DT[]> &y, 
-        DT &com_x, DT &com_y, int n);
+                   std::unique_ptr <DT[]> &x, std::unique_ptr <DT[]> &y, 
+                   DT &com_x, DT &com_y, int n);
 
 template<typename DT> 
-void _swap(DT &a, DT &b);
+void centroids_swap(DT &a, DT &b);
 
 template <typename DT>
 void _bubble_sort(std::unique_ptr <DT[]> &vals, 

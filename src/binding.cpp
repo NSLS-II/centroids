@@ -6,23 +6,21 @@
 #include "photons.h"
 #include "version.h"
 
-int _debug_print_flag = 1;
-
 namespace py = pybind11;
 
 py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int box)
 {
-    centroid_params<uint16_t> params;
-    centroids_initialize_params<uint16_t>(params);
+    centroid_params<uint16_t,double> params;
+    centroids_initialize_params<uint16_t,double>(&params);
 
     params.box = box;
     params.threshold = threshold;
     params.pixel_photon_num = 10;
     params.overlap_max = 0;
     params.sum_min = 800;
-    params.sum_max = 1200;
+    params.sum_max = 1210;
 
-    centroids_calculate_params<uint16_t>(params);
+    centroids_calculate_params<uint16_t>(&params);
 
     /* read input arrays buffer_info */
     py::buffer_info buf1 = images.request();
@@ -42,35 +40,14 @@ py::tuple _find_photons(py::array_t<uint16_t> images, uint16_t threshold, int bo
     PhotonTablePtr<double> photon_table(new PhotonTable<double>);
 
     size_t nphotons = centroids_process<uint16_t, double>(in_ptr, out_ptr, photon_table, X, Y, N, params);
-    fprintf(stderr, "nphotons = %ld\n", nphotons);
-
-    py::array_t<double> table = py::array_t<double>((8 + params.box_t) * nphotons);
-    py::buffer_info buf3 = table.request();
-    double *table_ptr = (double*)buf3.ptr;
-
-    // This is not so good, we now do a copy into the memory
-    for(auto table = photon_table->begin(); 
-        table != photon_table->end(); 
-        table++)
-    {
-        *(table_ptr++) = table->x;
-        *(table_ptr++) = table->y;
-        *(table_ptr++) = table->com_x;
-        *(table_ptr++) = table->com_y;
-        *(table_ptr++) = table->sum;
-        *(table_ptr++) = table->bgnd;
-        *(table_ptr++) = table->box_sum;
-        *(table_ptr++) = 0;
-        for(auto pixel = table->values->begin();
-                pixel != table->values->end();
-                pixel++)
-        {
-            *(table_ptr++) = *pixel;
-        }
-    }
 
     /* Reshape result to have same shape as input */
     result.resize({N, Y, X});
+    
+    // The following is some jiggery-pokery so we dont have to copy the vector.... 
+    auto capsule = py::capsule(photon_table, [](void *(photon_table)) 
+            { delete reinterpret_cast<std::vector<double>*>((photon_table)); });
+    auto table = py::array(photon_table->size(), photon_table->data(), capsule);
     table.resize({(int)nphotons, 8 + params.box_t});
 
     py::tuple args = py::make_tuple(table, result);
