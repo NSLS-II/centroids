@@ -21,14 +21,18 @@ using namespace std;
  */
 /* ----------------------------------------------------------------------------*/
 template <typename OT>
-int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
+int centroids_init_pixel_lut(centroids_pixel_lut<OT> &lut,
                              OT start, OT stop, size_t points)
 {
-    lut->start = start;
-    lut->n_points = points + 1;
-    lut->step = (stop - start) / lut->n_points;
+    lut.start = start;
+    lut.n_points = points + 1;
+    lut.step = (stop - start) / points;
 
-    lut = data(new OT[lut->n_points]);
+    lut.data = std::unique_ptr<OT[]>(new OT[lut.n_points]);
+
+    DEBUG_PRINT("Created lookup table start = %lf step = %lf steps = %ld\n",(double)lut.start,
+                                                                            (double)lut.step,
+                                                                            (unsigned long)lut.step);
 
     return CENTROIDS_LUT_OK;
 }
@@ -47,7 +51,7 @@ int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
  */
 /* ----------------------------------------------------------------------------*/
 template <typename OT>
-int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> *lut,
+int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> &lut,
                                   OT start, OT stop, size_t points)
 {
     int rtn = centroids_init_pixel_lut(lut, start, stop, points);
@@ -56,33 +60,40 @@ int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> *lut,
         return rtn;
     }
 
-    for(int n=0;n<lut->n_points;n++)
+    for(size_t n=0;n<lut.n_points;n++)
     {
-        lut[n] = start + n * lut->step;
+        lut.data[n] = start + n * lut.step;
+        DEBUG_PRINT("LUT %12ld = %lf\n", (unsigned long)n, (double)lut.data[n]);
     }
 
     return CENTROIDS_LUT_OK;
 }
 
 template <typename OT>
-int centroids_lookup_pixel_lut(centroids_pixel_lut<OT> *lut, 
-                               OT ival, OT *oval)
+int centroids_lookup_pixel_lut(centroids_pixel_lut<OT> &lut, 
+                               OT ival, OT &oval)
 {
-    OT pos = lut->step * (ival - lut->start);
+    OT pos = (ival - lut.start) / lut.step;
     if(pos < 0)
     {
+        DEBUG_PRINT("ival = %lf pos = %lf RANGE LOW\n", (double)ival, (double)pos);
         return CENTROIDS_LUT_RANGE_LOW;
     }
 
     size_t ipos = (size_t)pos; 
-    if(ipos >= lut->n_points)
+    if(ipos > lut.n_points) 
     {
+        DEBUG_PRINT("ival = %lf ipos = %ld RANGE HIGH\n", (double)ival, 
+                                                          (unsigned long)ipos);
         return CENTROIDS_LUT_RANGE_HIGH;
     }
 
-    *oval = lut->data[ipos];
+    oval = lut.data[ipos];
+    DEBUG_PRINT("ival = %lf ipos = %ld oval = %lf\n", (double)ival, 
+                                                      (unsigned long)ipos,
+                                                      (double)oval);
 
-    return 0;
+    return CENTROIDS_LUT_OK;
 }
 
 /* ----------------------------------------------------------------------------*/
@@ -105,6 +116,8 @@ void centroids_initialize_params(centroid_params<DT, OT> *params)
     params->sum_min = 0;
     params->sum_max = 10000;
     params->threshold = 100;
+    params->store_pixels = 0;
+    params->fit_pixels = 0;
 }
 
 /* ----------------------------------------------------------------------------*/
@@ -201,13 +214,18 @@ size_t centroids_process(DT *image, uint16_t *out,
     PhotonMapPtr<DT> photon_map(new PhotonMap<DT>);
 
     // Allocate a single image
+    OT start = -1.1;
+    OT stop = 1.1;
+    size_t np = 1200;
+    centroids_pixel_lut<OT> pixel_lut;
+    int i = centroids_calculate_pixel_lut<OT>(pixel_lut, start, stop, np);
 
     DEBUG_COMMENT("Looping through images....\n");
     for(size_t n=0;n<N;n++)
     {
         size_t fphotons, pphotons;
         fphotons = centroids_find_photons<DT, OT>(image_p, out_p, photon_map, X, Y, params); 
-        pphotons = centroids_process_photons<DT, OT>(photon_map, photon_table, params);
+        pphotons = centroids_process_photons<DT, OT>(photon_map, photon_table, pixel_lut, params);
 
         DEBUG_PRINT("Found %ld photons, processed %ld photons\n",(unsigned long)fphotons,
                                                                  (unsigned long)pphotons);
@@ -249,6 +267,7 @@ int _calculate_com(std::unique_ptr <DT[]> &pixels,
 template<typename DT, typename OT>
 size_t centroids_process_photons(PhotonMapPtr<DT> &photon_map,
                                  PhotonTablePtr<OT> &photon_table,
+                                 centroids_pixel_lut<OT> &pixel_lut,
                                  centroid_params<DT, OT> &params)
 {
     size_t n_photons = 0;
@@ -276,6 +295,8 @@ size_t centroids_process_photons(PhotonMapPtr<DT> &photon_map,
         {
             OT comx = 0;
             OT comy = 0;
+            OT ccomx = 0;
+            OT ccomy = 0;
             OT sum = 0;
             OT bgnd = 0;
 
@@ -321,12 +342,19 @@ size_t centroids_process_photons(PhotonMapPtr<DT> &photon_map,
                         (double)comx, (double)comy, 
                         (double)xvals[0], (double)yvals[0]);
 
-                photon_table->insert(photon_table->end(), {xvals[0], xvals[1], 
-                                                           comx, comy, sum, bgnd,
-                                                           (OT)box_sum, 0});
-                for(int m=0; m<params.box_t; m++)
+                centroids_lookup_pixel_lut<OT>(pixel_lut, comx - xvals[0], ccomx);
+                centroids_lookup_pixel_lut<OT>(pixel_lut, comy - yvals[0], ccomy);
+
+                photon_table->insert(photon_table->end(), {xvals[0], yvals[0], 
+                                                           comx, comy, 
+                                                           xvals[0] + ccomx, yvals[0] + ccomy,
+                                                           sum, bgnd, (OT)box_sum});
+                if(params.store_pixels)
                 {
-                    photon_table->push_back(*photon[m].image);
+                    for(int m=0; m<params.box_t; m++)
+                    {
+                        photon_table->push_back(*photon[m].image);
+                    }
                 }
 
                 n_photons++;

@@ -56,7 +56,8 @@ struct centroid_params
     size_t x;
     size_t y;
     size_t n;
-    centroids_pixel_lut<OT> pixel_lut;
+    int store_pixels;
+    int fit_pixels;
 };
 
 /* ----------------------------------------------------------------------------*/
@@ -116,16 +117,16 @@ template <typename DT, typename OT>
 int centroids_calculate_params(centroid_params<DT, OT> *params);
 
 template <typename OT>
-int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
+int centroids_init_pixel_lut(centroids_pixel_lut<OT> &lut,
                              OT start, OT stop, int points);
 
 template <typename OT>
-int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> *lut,
+int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> &lut,
                                   OT start, OT stop, int points);
 
 template <typename OT>
-int centroids_lookup_pixel_lut(centroids_pixel_lut<OT> *lut, 
-                               OT ival, OT *oval);
+int centroids_lookup_pixel_lut(centroids_pixel_lut<OT> &lut, 
+                               OT ival, OT &oval);
 
 template<typename DT, typename OT>
 size_t centroids_process(DT *image, uint16_t *out, 
@@ -136,6 +137,7 @@ size_t centroids_process(DT *image, uint16_t *out,
 template<typename DT, typename OT>
 size_t centroids_process_photons(PhotonMapPtr<DT> &photon_map,
                                  PhotonTablePtr<OT> &photon_table,
+                                 centroids_pixel_lut<OT> &pixel_lut,
                                  centroid_params<DT, OT> &params);
 
 template<typename DT, typename OT> 
