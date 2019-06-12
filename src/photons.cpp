@@ -62,7 +62,8 @@ int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> &lut,
 
     for(size_t n=0;n<lut.n_points;n++)
     {
-        lut.data[n] = start + n * lut.step;
+        OT x = start + n * lut.step;
+        lut.data[n] = x;
         DEBUG_PRINT("LUT %12ld = %lf\n", (unsigned long)n, (double)lut.data[n]);
     }
 
@@ -167,9 +168,9 @@ void centroids_swap(DT &a, DT &b)
  */
 /* ----------------------------------------------------------------------------*/
 template <typename DT>
-void _bubble_sort(std::unique_ptr <DT[]> &vals, 
-        std::unique_ptr <DT[]> &x, std::unique_ptr <DT[]> &y, 
-        int n)
+void centroids_bubble_sort(std::unique_ptr <DT[]> &vals, 
+                           std::unique_ptr <DT[]> &x, 
+                           std::unique_ptr <DT[]> &y, int n)
 {
     for (int i=0;i<(n-1);i++) 
     {
@@ -218,7 +219,12 @@ size_t centroids_process(DT *image, uint16_t *out,
     OT stop = 1.1;
     size_t np = 1200;
     centroids_pixel_lut<OT> pixel_lut;
-    int i = centroids_calculate_pixel_lut<OT>(pixel_lut, start, stop, np);
+    if(centroids_calculate_pixel_lut<OT>(pixel_lut, start, stop, np)
+       != CENTROIDS_LUT_OK)
+    {
+        DEBUG_COMMENT("Failed to calculate LUT\n");
+        return 0;
+    }
 
     DEBUG_COMMENT("Looping through images....\n");
     for(size_t n=0;n<N;n++)
@@ -242,9 +248,9 @@ size_t centroids_process(DT *image, uint16_t *out,
 }
 
 template <typename DT>
-int _calculate_com(std::unique_ptr <DT[]> &pixels, 
-                   std::unique_ptr <DT[]> &x, std::unique_ptr <DT[]> &y, 
-                   DT &com_x, DT &com_y, int n)
+int centroids_calculate_com(std::unique_ptr <DT[]> &pixels, 
+                            std::unique_ptr <DT[]> &x, std::unique_ptr <DT[]> &y, 
+                            DT &com_x, DT &com_y, int n)
 {
     DT sum = 0;
 
@@ -301,7 +307,7 @@ size_t centroids_process_photons(PhotonMapPtr<DT> &photon_map,
             OT bgnd = 0;
 
             // Bubble sort values
-            _bubble_sort<OT>(pixel_cluster, xvals, yvals, params.box_t);
+            centroids_bubble_sort<OT>(pixel_cluster, xvals, yvals, params.box_t);
 
             // Now we process background
             for(int n=params.pixel_photon_num;n<params.box_t;n++)
@@ -336,7 +342,7 @@ size_t centroids_process_photons(PhotonMapPtr<DT> &photon_map,
             {
 
                 // Calculate the COM
-                _calculate_com<OT>(pixel_cluster, xvals, yvals,
+                centroids_calculate_com<OT>(pixel_cluster, xvals, yvals,
                         comx, comy, params.box_t);
                 DEBUG_PRINT("COM = %lf, %lf (%lf, %lf)\n", 
                         (double)comx, (double)comy, 

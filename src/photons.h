@@ -79,17 +79,6 @@ using PixelValues = std::vector<T>;
 template<typename T>
 using PixelValuesPtr = std::shared_ptr<PixelValues<T>>;
 
-//template <typename OT> struct photon_params {
-//    OT x;
-//    OT y;
-//    OT com_x;
-//    OT com_y;
-//    OT sum;
-//    OT bgnd;
-//    int box_sum;
-//    PixelValuesPtr<OT> values;
-//};
-
 enum {
     CENTROIDS_PARAMS_OK = 0,
     CENTROIDS_PARAMS_BAD = 1
@@ -147,16 +136,16 @@ size_t centroids_find_photons(DT *image, uint16_t *out,
                               centroid_params<DT, OT> &params);
 
 template <typename DT>
-int _calculate_com(std::unique_ptr <DT[]> &pixels, 
-                   std::unique_ptr <DT[]> &x, std::unique_ptr <DT[]> &y, 
-                   DT &com_x, DT &com_y, int n);
+int centroids_calculate_com(std::unique_ptr <DT[]> &pixels, 
+                            std::unique_ptr <DT[]> &x, std::unique_ptr <DT[]> &y, 
+                            DT &com_x, DT &com_y, int n);
 
 template<typename DT> 
 void centroids_swap(DT &a, DT &b);
 
 template <typename DT>
-void _bubble_sort(std::unique_ptr <DT[]> &vals, 
-        std::unique_ptr <DT[]> &x, std::unique_ptr <DT[]> &y, 
-        int n);
+void centroids_bubble_sort(std::unique_ptr <DT[]> &vals, 
+                           std::unique_ptr <DT[]> &x, 
+                           std::unique_ptr <DT[]> &y, int n);
 
 #endif
