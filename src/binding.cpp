@@ -1,3 +1,39 @@
+//
+// CENTROIDS : C++ implementation of single photon counting for CCDs
+// Stuart B. Wilkins, Brookhaven National Laboratory
+//
+//
+// BSD 3-Clause License
+//
+// Copyright (c) 2019, Brookhaven Science Associates
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright notice,
+//    this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright notice,
+//    this list of conditions and the following disclaimer in the documentation
+//    and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the copyright holder nor the names of its
+//    contributors may be used to endorse or promote products derived from
+//    this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+// THE POSSIBILITY OF SUCH DAMAGE.
+
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <vector>
@@ -8,10 +44,9 @@
 
 namespace py = pybind11;
 
-py::tuple _find_photons(py::array_t<uint16_t> images, 
+py::tuple _find_photons(py::array_t<uint16_t> images,
                         uint16_t threshold, int box, int pixel_photon,
-                        int overlap_max, double sum_min, double sum_max)
-{
+                        int overlap_max, double sum_min, double sum_max) {
     /* read input arrays buffer_info */
     py::buffer_info buf1 = images.request();
 
@@ -21,14 +56,14 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
 
     // Allcoate the table buffer
 
-    uint16_t *in_ptr = (uint16_t*)buf1.ptr;
-    uint16_t *out_ptr = (uint16_t*)buf2.ptr;
+    uint16_t *in_ptr = reinterpret_cast<uint16_t*>(buf1.ptr);
+    uint16_t *out_ptr = reinterpret_cast<uint16_t*>(buf2.ptr);
     size_t X = buf1.shape[2];
     size_t Y = buf1.shape[1];
     size_t N = buf1.shape[0];
 
-    centroid_params<uint16_t,double> params;
-    centroids_initialize_params<uint16_t,double>(&params);
+    centroid_params<uint16_t, double> params;
+    centroids_initialize_params<uint16_t, double>(&params);
 
     params.threshold = threshold;
     params.box = box;
@@ -43,20 +78,23 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
 
     centroids_calculate_params<uint16_t>(&params);
 
-    PhotonTablePtr<double> photon_table(new PhotonTable<double>);
-    size_t nphotons = centroids_process<uint16_t, double>(in_ptr, out_ptr, photon_table, X, Y, N, params);
+    PhotonTable<double>* photon_table(new PhotonTable<double>);
+    size_t nphotons = centroids_process<uint16_t, double>(in_ptr, out_ptr,
+                                                          photon_table,
+                                                          X, Y, N, params);
 
     size_t photon_table_cols = 9;
-    if(params.store_pixels)
-    {
+    if (params.store_pixels) {
         photon_table_cols += params.box_t;
     }
 
-    // The following is some jiggery-pokery so we dont have to copy the vector.... 
-    // https://stackoverflow.com/questions/54876346/pybind11-and-stdvector-how-to-free-data-using-capsules
-    auto capsule = py::capsule(photon_table, [](void *(photon_table)) 
+    // The following is some jiggery-pokery so we dont
+    // have to copy the vector....
+    auto capsule = py::capsule(photon_table, [](void *(photon_table))
             { delete reinterpret_cast<std::vector<double>*>((photon_table)); });
-    auto table = py::array({(int)nphotons, (int)photon_table_cols}, photon_table->data(), capsule);
+    auto table = py::array({static_cast<int>(nphotons),
+                            static_cast<int>(photon_table_cols)},
+                            photon_table->data(), capsule);
 
     // Reshape the output array...
     result.resize({N, Y, X});
@@ -66,15 +104,15 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
 }
 
 PYBIND11_MODULE(pycentroids, m) {
-   m.doc() = "Fast centroiding routines for CCD detectors";
-   m.def("find_photons", &_find_photons, 
-         "Find photons", 
-         py::arg("images"), 
-         py::arg("threshold") = 200, 
-         py::arg("box") = 2,
-         py::arg("pixel_photon") = 10,
-         py::arg("overlap_max") = 0,
-         py::arg("sum_min") = 800,
-         py::arg("sum_max") = 1250);
-   m.attr("__version__") = GIT_VERSION;
+     m.doc() = "Fast centroiding routines for CCD detectors";
+     m.def("find_photons", &_find_photons,
+           "Find photons",
+           py::arg("images"),
+           py::arg("threshold") = 200,
+           py::arg("box") = 2,
+           py::arg("pixel_photon") = 10,
+           py::arg("overlap_max") = 0,
+           py::arg("sum_min") = 800,
+           py::arg("sum_max") = 1250);
+     m.attr("__version__") = GIT_VERSION;
 }

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.12)
 project(centroids)
 
+include(cmake/cpplint.cmake)
+cpplint_add_subdirectory(src)
+
 set(CMAKE_CXX_STANDARD 14)
 option(PEDANTIC "Compile with pedantic warnings" ON)
 option(WERROR "Treat warnings as errors" OFF)
@@ -27,15 +30,15 @@ ADD_CUSTOM_COMMAND(
 	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 	${CMAKE_CURRENT_BINARY_DIR}/_version.cpp
 	COMMAND ${CMAKE_COMMAND} -P
-	${CMAKE_CURRENT_SOURCE_DIR}/version.cmake)
+	${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.cmake)
 
 find_package(pybind11 REQUIRED)
-pybind11_add_module(pycentroids 
-	src/binding.cpp src/photons.cpp src/photons.h 
+pybind11_add_module(pycentroids
+	src/binding.cpp src/photons.cpp src/photons.h
 	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
 
-add_library(centroids 
-	src/photons.cpp src/photons.h 
+add_library(centroids
+	src/photons.cpp src/photons.h
 	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
