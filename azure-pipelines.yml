@@ -21,7 +21,7 @@ jobs:
         displayName: Create Anaconda environment
       - bash: |
             source activate testenv
-            conda install --yes --quiet --name testenv pybind11
+            conda install --yes --quiet --name testenv pybind11 cpplint
         displayName: Install Anaconda packages
       - script: |
             source activate testenv
