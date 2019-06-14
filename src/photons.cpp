@@ -43,7 +43,7 @@
 
 /* -------------------------------------------------------------------------*/
 /**
- * \brief
+ * \brief 
  *
  * @tparam OT
  * param lut
@@ -51,7 +51,7 @@
  * param stop
  * param points
  *
- * Returns
+ * Returns   
  */
 /* -------------------------------------------------------------------------*/
 template <typename OT>
@@ -71,7 +71,7 @@ int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
 
 /* -------------------------------------------------------------------------*/
 /**
- * \brief
+ * \brief 
  *
  * @tparam OT
  * param lut
@@ -79,7 +79,7 @@ int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
  * param stop
  * param points
  *
- * Returns
+ * Returns   
  */
 /* -------------------------------------------------------------------------*/
 template <typename OT>
@@ -99,6 +99,18 @@ int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> *lut,
     return CENTROIDS_LUT_OK;
 }
 
+/* -------------------------------------------------------------------------*/
+/**
+ * \brief 
+ *
+ * @tparam OT
+ * param lut
+ * param ival
+ * param oval
+ *
+ * Returns   
+ */
+/* -------------------------------------------------------------------------*/
 template <typename OT>
 int centroids_lookup_pixel_lut(const centroids_pixel_lut<OT> &lut,
                                const OT ival, OT *oval) {
