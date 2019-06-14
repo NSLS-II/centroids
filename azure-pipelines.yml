@@ -22,12 +22,11 @@ jobs:
       - bash: |
             source activate testenv
             conda install --yes --quiet --name testenv pybind11
-        displayName: Install Anaconda packages
-      - script: |
-            source activate testenv
             python -m pip install flake8 cpplint
+        displayName: Install Python packages
+      - script: |
             flake8 .
-        displayName: 'Run lint tests'
+        displayName: Run lint tests
       - bash: |
             source activate testenv
             python --version
