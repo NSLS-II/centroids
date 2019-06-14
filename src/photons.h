@@ -154,7 +154,6 @@ int centroids_lookup_pixel_lut(const centroids_pixel_lut<OT> &lut,
 template<typename DT, typename OT>
 size_t centroids_process(DT *image, uint16_t *out,
                          PhotonTable<OT> *photon_table,
-                         size_t X, size_t Y, size_t N,
                          const centroid_params<DT, OT> &params);
 
 template<typename DT, typename OT>
@@ -166,7 +165,6 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
 template<typename DT, typename OT>
 size_t centroids_find_photons(DT *image, uint16_t *out,
                               PhotonMap<DT> *photon_map,
-                              size_t X, size_t Y,
                               const centroid_params<DT, OT> &params);
 
 template <typename DT>

@@ -58,9 +58,6 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
 
     uint16_t *in_ptr = reinterpret_cast<uint16_t*>(buf1.ptr);
     uint16_t *out_ptr = reinterpret_cast<uint16_t*>(buf2.ptr);
-    size_t X = buf1.shape[2];
-    size_t Y = buf1.shape[1];
-    size_t N = buf1.shape[0];
 
     centroid_params<uint16_t, double> params;
     centroids_initialize_params<uint16_t, double>(&params);
@@ -79,9 +76,9 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
     centroids_calculate_params<uint16_t>(&params);
 
     PhotonTable<double>* photon_table(new PhotonTable<double>);
-    size_t nphotons = centroids_process<uint16_t, double>(in_ptr, out_ptr,
-                                                          photon_table,
-                                                          X, Y, N, params);
+
+    size_t nphotons = centroids_process<uint16_t, double>(
+            in_ptr, out_ptr, photon_table, params);
 
     size_t photon_table_cols = 9;
     if (params.store_pixels) {
@@ -97,7 +94,7 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
                             photon_table->data(), capsule);
 
     // Reshape the output array...
-    result.resize({N, Y, X});
+    result.resize({params.n, params.y, params.x});
 
     py::tuple args = py::make_tuple(table, result);
     return args;

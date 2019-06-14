@@ -221,7 +221,6 @@ void centroids_bubble_sort(DT *vals, DT *x, DT *y, const int n) {
 template<typename DT, typename OT>
 size_t centroids_process(DT *image, uint16_t *out,
                          PhotonTable<OT> *photon_table,
-                         size_t X, size_t Y, size_t N,
                          const centroid_params<DT, OT> &params) {
     size_t n_photons = 0;
     DT *image_p = image;
@@ -242,21 +241,19 @@ size_t centroids_process(DT *image, uint16_t *out,
     }
 
     DEBUG_COMMENT("Looping through images....\n");
-    for (size_t n = 0; n < N; n++) {
+    for (size_t n = 0; n < params.n; n++) {
         size_t fphotons, pphotons;
-        fphotons = centroids_find_photons<DT, OT>(image_p, out_p,
-                                                  photon_map.get(),
-                                                  X, Y, params);
-        pphotons = centroids_process_photons<DT, OT>(photon_map.get(),
-                                                     photon_table,
-                                                     pixel_lut,
-                                                     params);
+        fphotons = centroids_find_photons<DT, OT>(
+                image_p, out_p, photon_map.get(), params);
+
+        pphotons = centroids_process_photons<DT, OT>(
+                photon_map.get(), photon_table, pixel_lut, params);
 
         DEBUG_PRINT("Found %ld photons, processed %ld photons\n",
                 fphotons, pphotons);
 
-        image_p += (X * Y);
-        out_p += (X * Y);
+        image_p += (params.x * params.y);
+        out_p += (params.x * params.y);
         n_photons += pphotons;
     }
 
@@ -389,39 +386,38 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
 template<typename DT, typename OT>
 size_t centroids_find_photons(DT *image, uint16_t *out,
                               PhotonMap<DT> *photon_map,
-                              size_t X, size_t Y,
                               const centroid_params<DT, OT> &params) {
     uint16_t *out_p = out;
     DT *in_p = image;
     size_t n_photons = 0;
 
     // Blank the output
-    for (size_t i = 0; i < (X* Y); i++) {
+    for (size_t i = 0; i < (params.x * params.y); i++) {
         out[i] = 0;
     }
 
     // Start loop through image, we need to skip by params.box
     for (size_t j = 0; j < (size_t)params.box; j++) {
-        for (size_t i = 0; i < X; i++) {
+        for (size_t i = 0; i < params.x; i++) {
             *(out_p++) = 1;
             in_p++;
         }
     }
 
-    for (size_t j = params.box; j < (Y-(size_t)params.box); j++) {
+    for (size_t j = params.box; j < (params.y - (size_t)params.box); j++) {
         for (size_t i = 0; i < (size_t)params.box; i++) {
             *(out_p++) = 1;
             in_p++;
         }
 
-        for (size_t i = params.box; i < (X - params.box); i++) {
+        for (size_t i = params.box; i < (params.x - params.box); i++) {
             // This is the main routine.
             // Is this pixel above threshold
             if (*in_p >= params.threshold) {
                 // Check if this is the highest pixel
-                // Rewind by 1 params.box in X and 1 params.box in Y
+                // Rewind by 1 params.box in X and 1 params.box in y
                 DT *_in_p = in_p;
-                _in_p -= (params.box + (X * params.box));
+                _in_p -= (params.box + (params.x * params.box));
 
                 int flag = 1;
                 for (size_t l = 0; l < (size_t)params.box_n; l++) {
@@ -439,7 +435,7 @@ size_t centroids_find_photons(DT *image, uint16_t *out,
                         break;
                     }
 
-                    _in_p += (X - params.box_n);
+                    _in_p += (params.x - params.box_n);
                 }
 
                 if (flag) {
@@ -456,8 +452,8 @@ size_t centroids_find_photons(DT *image, uint16_t *out,
 
                     // Now set the pointers for dealing with the box
                     uint16_t *_out_p = out_p;
-                    _out_p = out_p - (params.box + (X * params.box));
-                    _in_p = in_p - (params.box + (X * params.box));
+                    _out_p = out_p - (params.box + (params.x * params.box));
+                    _in_p = in_p - (params.box + (params.x * params.box));
 
                     // Loop over the box
                     for (int l = -params.box; l <= params.box; l++) {
@@ -477,22 +473,22 @@ size_t centroids_find_photons(DT *image, uint16_t *out,
                             _in_p++;
                             _out_p++;
                         }
-                        _out_p += (X - params.box_n);
-                        _in_p += (X - params.box_n);
+                        _out_p += (params.x - params.box_n);
+                        _in_p += (params.x - params.box_n);
                     }
                 }  // if(flag)
             }  // if(threshold)
             out_p++; in_p++;
         }
 
-        for (size_t i = (X-params.box); i < X; i++) {
+        for (size_t i = (params.x - params.box); i < params.x; i++) {
             *(out_p++) = 1;
             in_p++;
         }
     }
 
-    for (size_t j = (Y - params.box); j < Y ; j++) {
-        for (size_t i = 0; i < X; i++) {
+    for (size_t j = (params.y - params.box); j < params.y ; j++) {
+        for (size_t i = 0; i < params.x; i++) {
             *(out_p++) = 1;
             in_p++;
         }
@@ -507,7 +503,6 @@ template int centroids_calculate_params<uint16_t, double>(
         centroid_params<uint16_t, double> *params);
 template size_t centroids_process<uint16_t, double>(
         uint16_t *image, uint16_t *out, PhotonTable<double> *photon_table,
-        size_t X, size_t Y, size_t N,
         const centroid_params<uint16_t, double> &params);
 
 template void centroids_initialize_params<uint16_t, float>(
@@ -516,5 +511,4 @@ template int centroids_calculate_params<uint16_t, float>(
         centroid_params<uint16_t, float> *params);
 template size_t centroids_process<uint16_t, float>(
         uint16_t *image, uint16_t *out, PhotonTable<float> *photon_table,
-        size_t X, size_t Y, size_t N,
         const centroid_params<uint16_t, float> &params);
