@@ -68,7 +68,7 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
     params.overlap_max = overlap_max;
     params.sum_min = sum_min;
     params.sum_max = sum_max;
-    params.store_pixels = false;
+    params.store_pixels = CENTROIDS_STORE_NONE;
     params.x = buf1.shape[2];
     params.y = buf1.shape[1];
     params.n = buf1.shape[0];
@@ -81,7 +81,7 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
             in_ptr, out_ptr, photon_table, params);
 
     size_t photon_table_cols = 9;
-    if (params.store_pixels) {
+    if (params.store_pixels != CENTROIDS_STORE_NONE) {
         photon_table_cols += params.box_t;
     }
 

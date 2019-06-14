@@ -43,7 +43,7 @@
 
 /* -------------------------------------------------------------------------*/
 /**
- * \brief 
+ * \brief
  *
  * @tparam OT
  * param lut
@@ -51,7 +51,7 @@
  * param stop
  * param points
  *
- * Returns   
+ * Returns
  */
 /* -------------------------------------------------------------------------*/
 template <typename OT>
@@ -71,7 +71,7 @@ int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
 
 /* -------------------------------------------------------------------------*/
 /**
- * \brief 
+ * \brief
  *
  * @tparam OT
  * param lut
@@ -79,7 +79,7 @@ int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
  * param stop
  * param points
  *
- * Returns   
+ * Returns
  */
 /* -------------------------------------------------------------------------*/
 template <typename OT>
@@ -101,14 +101,14 @@ int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> *lut,
 
 /* -------------------------------------------------------------------------*/
 /**
- * \brief 
+ * \brief
  *
  * @tparam OT
  * param lut
  * param ival
  * param oval
  *
- * Returns   
+ * Returns
  */
 /* -------------------------------------------------------------------------*/
 template <typename OT>
@@ -154,7 +154,7 @@ void centroids_initialize_params(centroid_params<DT, OT> *params) {
     params->sum_min = 0;
     params->sum_max = 10000;
     params->threshold = 100;
-    params->store_pixels = 0;
+    params->store_pixels = CENTROIDS_STORE_NONE;
     params->fit_pixels = 0;
 }
 
@@ -378,9 +378,13 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
                          xvals[0] + ccomx, yvals[0] + ccomy,
                          sum, bgnd, (OT)box_sum});
 
-                if (params.store_pixels) {
+                if (params.store_pixels == CENTROIDS_STORE_SORTED) {
                     for (int m = 0; m < params.box_t; m++) {
-                        photon_table->push_back(*photon[m].image);
+                        photon_table->push_back(pixel_cluster[m]);
+                    }
+                } else if (params.store_pixels == CENTROIDS_STORE_UNSORTED) {
+                    for (int m = 0; m < params.box_t; m++) {
+                        photon_table->push_back(*(photon[m].image));
                     }
                 }
 

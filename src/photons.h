@@ -128,6 +128,12 @@ enum {
     CENTROIDS_LUT_RANGE_HIGH = 2
 };
 
+enum {
+    CENTROIDS_STORE_NONE = 0,
+    CENTROIDS_STORE_SORTED = 1,
+    CENTROIDS_STORE_UNSORTED = 2
+};
+
 template <typename DT>
 using PhotonTable = std::vector<DT>;
 template <typename DT>
