@@ -25,6 +25,7 @@ jobs:
             python -m pip install flake8 cpplint
         displayName: Install Python packages
       - script: |
+            source activate testenv
             flake8 .
         displayName: Run lint tests
       - bash: |
