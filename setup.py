@@ -37,17 +37,7 @@ class CMakeBuild(build_ext):
         extdir = os.path.abspath(
             os.path.dirname(self.get_ext_fullpath(ext.name)))
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-                      '-DPYTHON_EXECUTABLE=' + sys.executable,
-                      '-DOpenMP_C_FLAGS="-Xpreprocessor -fopenmp -I'
-                      '/usr/local/opt/libomp/include',
-                      '-DOpenMP_C_LIB_NAMES=omp',
-                      '-DOpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp -I'
-                      '/usr/local/opt/libomp/include',
-                      '-DOpenMP_CXX_LIB_NAMES=omp',
-                      '-DOpenMP_omp_LIBRARY='
-                      '/usr/local/opt/libomp'
-                      '/lib/libomp.dylib']
-
+                      '-DPYTHON_EXECUTABLE=' + sys.executable]
 
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
