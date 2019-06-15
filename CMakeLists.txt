@@ -8,6 +8,7 @@ cpplint_add_subdirectory(src)
 
 include_directories(/usr/local/include)
 link_directories(/usr/local/lib)
+link_directories(/usr/lib)
 
 
 set(CMAKE_CXX_STANDARD 14)
