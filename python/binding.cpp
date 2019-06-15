@@ -88,7 +88,7 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
     }
 
     if (params.fit_pixels != CENTROIDS_FIT_NONE) {
-        photon_table_cols += CENTROIDS_FIT_PARAMS_N;
+        photon_table_cols += CENTROIDS_FIT_PARAMS_N + 1;
     }
 
     // The following is some jiggery-pokery so we dont

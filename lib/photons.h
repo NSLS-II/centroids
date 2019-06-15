@@ -205,4 +205,7 @@ void centroids_swap(DT *a, DT *b);
 template <typename DT>
 void centroids_bubble_sort(DT *vals, DT *x, DT *y, const int n);
 
+template <typename DT>
+DT centroids_std_error_estimate(DT *a, DT *b, const size_t N);
+
 #endif  // LIB_PHOTONS_H_

@@ -238,6 +238,19 @@ double centroids_2dgauss_int(double tx, double tz, const double *p) {
     return out;
 }
 
+template <typename DT>
+DT centroids_std_error_estimate(DT *a, DT *b, const size_t N) {
+
+    DT sum = 0;
+    for (size_t i = 0;i < N; i++) {
+        sum += pow(a[i] - b[i], 2);
+    }
+
+    sum /= (DT)N;
+
+    return pow(sum, 0.5);
+}
+
 void centroids_evaluate_2dgauss(const double *par, int m_dat,
         const void *data, double *fvec, int *info ) {
     UNUSED(info);
@@ -359,6 +372,7 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
     size_t n_photons = 0;
 
     std::unique_ptr<OT[]> pixel_cluster(new OT[params.box_t]);
+    std::unique_ptr<OT[]> pixel_cluster_calc(new OT[params.box_t]);
     std::unique_ptr<OT[]> xvals(new OT[params.box_t]);
     std::unique_ptr<OT[]> yvals(new OT[params.box_t]);
     double fit_params[CENTROIDS_FIT_PARAMS_N];
@@ -455,10 +469,30 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
 
                     DEBUG_PRINT("FIT : status after %d evaluations:  %s\n",
                             fit_status.nfev, lm_infmsg[fit_status.outcome]);
+#ifdef DEBUG_OUTPUT
                     for (int i = 0; i < CENTROIDS_FIT_PARAMS_N; i++) {
                         DEBUG_PRINT("FIT : par[%i] = %12g\n", i, fit_params[i]);
-                        photon_table->push_back(fit_params[i]);
                     }
+#endif
+                    photon_table->insert(photon_table->end(), &fit_params[0], 
+                            &fit_params[CENTROIDS_FIT_PARAMS_N]);
+
+                    // Calcuate the standard error
+                    for (int i = 0;i < params.box_t; i++) {
+                        pixel_cluster_calc[i] = (OT)centroids_2dgauss_int(
+                                (double)xvals[i], (double)yvals[i], fit_params);
+                        DEBUG_PRINT("FIT actual = %lf fit = %lf residual = %lf\n",
+                                (double)pixel_cluster[i], (double)pixel_cluster_calc[i], 
+                                (double)abs(pixel_cluster[i] - pixel_cluster_calc[i]));
+                    }
+
+                    OT std_err = centroids_std_error_estimate<OT>(pixel_cluster.get(), 
+                            pixel_cluster_calc.get(), params.box_t);
+
+                    DEBUG_PRINT("FIT std err = %lf\n", (double)std_err);
+
+                    photon_table->push_back(std_err);
+                     
                 }
 
                 if (params.store_pixels == CENTROIDS_STORE_SORTED) {
