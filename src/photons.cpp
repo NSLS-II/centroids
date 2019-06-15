@@ -39,6 +39,7 @@
 #include <lmmin.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <omp.h>
 #include <math.h>
 #include <vector>
 #include <memory>
@@ -271,7 +272,6 @@ size_t centroids_process(DT *image, uint16_t *out,
     uint16_t *out_p = out;
 
     // Make the arrays for each image
-    std::unique_ptr<PhotonMap<DT>> photon_map(new PhotonMap<DT>);
 
     // Allocate a single image
     OT start = -1.1;
@@ -284,25 +284,39 @@ size_t centroids_process(DT *image, uint16_t *out,
         return 0;
     }
 
-    DEBUG_COMMENT("Looping through images....\n");
-    for (size_t n = 0; n < params.n; n++) {
-        size_t fphotons, pphotons;
-        fphotons = centroids_find_photons<DT, OT>(
-                image_p, out_p, photon_map.get(), params);
+    #pragma omp parallel
+    {
+        std::unique_ptr<PhotonMap<DT>> photon_map(new PhotonMap<DT>);
+        PhotonTable<OT> local_photon_table;
 
-        pphotons = centroids_process_photons<DT, OT>(
-                photon_map.get(), photon_table, pixel_lut, params);
+        DEBUG_COMMENT("Looping through images....\n");
+        #pragma omp for
+        for (size_t n = 0; n < params.n; n++) {
+            size_t fphotons, pphotons;
+            fphotons = centroids_find_photons<DT, OT>(
+                    image_p, out_p, photon_map.get(), params);
 
-        DEBUG_PRINT("Found %ld photons, processed %ld photons\n",
-                fphotons, pphotons);
+            pphotons = centroids_process_photons<DT, OT>(
+                    photon_map.get(), &local_photon_table, pixel_lut, params);
 
-        image_p += (params.x * params.y);
-        out_p += (params.x * params.y);
-        n_photons += pphotons;
+            DEBUG_PRINT("Found %ld photons, processed %ld photons\n",
+                    fphotons, pphotons);
+
+            image_p += (params.x * params.y);
+            out_p += (params.x * params.y);
+            n_photons += pphotons;
+        }
+
+        #pragma omp critical
+        {
+            photon_table->insert(photon_table->end(),
+                    std::make_move_iterator(local_photon_table.begin()),
+                    std::make_move_iterator(local_photon_table.end()));
+        }
     }
 
     DEBUG_PRINT("Found %zu photons\n", n_photons);
-    DEBUG_PRINT("photon_map->size() = %zu\n", photon_map->size());
+    DEBUG_PRINT("photon_map->size() = %zu\n", photon_table->size());
 
     return n_photons;
 }

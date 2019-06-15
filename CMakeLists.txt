@@ -8,6 +8,7 @@ include(cmake/cpplint.cmake)
 cpplint_add_subdirectory(src)
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 option(PEDANTIC "Compile with pedantic warnings" ON)
 option(WERROR "Treat warnings as errors" OFF)
 option(DEBUG_OUTPUT "Print debug outout to stderr" OFF)
@@ -20,9 +21,9 @@ if(WERROR)
 	add_compile_options(-Werror)
 endif()
 
-if(DEBUG_OUTPUT)
-	add_compile_options("-DDEBUG_OUTPUT")
-endif()
+# if(DEBUG_OUTPUT)
+# 	add_compile_options("-DDEBUG_OUTPUT")
+# endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 
@@ -36,7 +37,7 @@ ADD_CUSTOM_COMMAND(
 	${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.cmake)
 
 find_package(pybind11 REQUIRED)
-pybind11_add_module(pycentroids
+pybind11_add_module(pycentroids EXCLUDE_FROM_ALL
 	src/binding.cpp src/photons.cpp src/photons.h
 	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
@@ -46,3 +47,10 @@ add_library(centroids
 	src/photons.cpp src/photons.h
 	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
+
+find_package(OpenMP REQUIRED)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(pycentroids PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(centroids PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
