@@ -268,8 +268,6 @@ size_t centroids_process(DT *image, uint16_t *out,
                          PhotonTable<OT> *photon_table,
                          const centroid_params<DT, OT> &params) {
     size_t n_photons = 0;
-    DT *image_p = image;
-    uint16_t *out_p = out;
 
     // Make the arrays for each image
 
@@ -284,27 +282,33 @@ size_t centroids_process(DT *image, uint16_t *out,
         return 0;
     }
 
-    #pragma omp parallel
+    #pragma omp parallel shared(n_photons)
     {
-        std::unique_ptr<PhotonMap<DT>> photon_map(new PhotonMap<DT>);
         PhotonTable<OT> local_photon_table;
+        size_t local_n_photons = 0;
+        PhotonMap<DT> photon_map;
 
-        DEBUG_COMMENT("Looping through images....\n");
         #pragma omp for
         for (size_t n = 0; n < params.n; n++) {
+            // Get he pointers for the input and output images
+            DT *image_p = image + (n * params.x * params.y);
+            uint16_t *out_p = out + (n * params.x * params.y);
             size_t fphotons, pphotons;
+
+            photon_map.clear();
             fphotons = centroids_find_photons<DT, OT>(
-                    image_p, out_p, photon_map.get(), params);
+                    image_p, out_p, &photon_map, params);
+
+            DEBUG_PRINT("fphotons = %zu, photon_map.size() = %zu\n",
+                    fphotons, photon_map.size());
 
             pphotons = centroids_process_photons<DT, OT>(
-                    photon_map.get(), &local_photon_table, pixel_lut, params);
+                    &photon_map, &local_photon_table, pixel_lut, params);
 
-            DEBUG_PRINT("Found %ld photons, processed %ld photons\n",
-                    fphotons, pphotons);
+            DEBUG_PRINT("Image %zu Found %zu photons, processed %zu photons\n",
+                    n, fphotons, pphotons);
 
-            image_p += (params.x * params.y);
-            out_p += (params.x * params.y);
-            n_photons += pphotons;
+            local_n_photons += pphotons;
         }
 
         #pragma omp critical
@@ -312,6 +316,8 @@ size_t centroids_process(DT *image, uint16_t *out,
             photon_table->insert(photon_table->end(),
                     std::make_move_iterator(local_photon_table.begin()),
                     std::make_move_iterator(local_photon_table.end()));
+            DEBUG_PRINT("local_n_photons = %zu\n", local_n_photons);
+            n_photons += local_n_photons;
         }
     }
 
@@ -554,7 +560,6 @@ size_t centroids_find_photons(DT *image, uint16_t *out,
                                     k, l, (void*)_in_p, (void*)_out_p);
                             photon_map->push_back(
                                     {_in_p, _out_p, i + k, j + l});
-                            n_photons++;
 
                             // Increment the out value
                             (*_out_p)++;
@@ -566,6 +571,7 @@ size_t centroids_find_photons(DT *image, uint16_t *out,
                         _out_p += (params.x - params.box_n);
                         _in_p += (params.x - params.box_n);
                     }
+                    n_photons++;
                 }  // if(flag)
             }  // if(threshold)
             out_p++; in_p++;
