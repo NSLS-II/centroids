@@ -46,12 +46,12 @@ pybind11_add_module(pycentroids EXCLUDE_FROM_ALL
 	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
 target_link_libraries(pycentroids PRIVATE liblmfit.so)
-target_link_libraries(centroids PRIVATE liblmfit.so)
 
 add_library(centroids
 	src/photons.cpp src/photons.h
 	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
+target_link_libraries(centroids PRIVATE liblmfit.so)
 
 find_package(OpenMP REQUIRED)
 if(OpenMP_CXX_FOUND)
