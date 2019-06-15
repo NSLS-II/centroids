@@ -38,6 +38,7 @@ jobs:
                 -DCMAKE_POSITION_INDEPENDENT_CODE=YES \
                 -DCMAKE_INSTALL_PREFIX=/usr \
                 -DLIB_INSTALL=ON \
+                --trace \
                 ..
         displayName: Build lmfit
       - bash: |
