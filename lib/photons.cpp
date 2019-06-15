@@ -35,7 +35,6 @@
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include "photons.h"
 #include <lmmin.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -43,6 +42,9 @@
 #include <math.h>
 #include <vector>
 #include <memory>
+
+#include "photons.h"
+#include "centroids.h"
 
 /* -------------------------------------------------------------------------*/
 /**
@@ -474,6 +476,7 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
                         DEBUG_PRINT("FIT : par[%i] = %12g\n", i, fit_params[i]);
                     }
 #endif
+                    // Add fit results
                     photon_table->insert(photon_table->end(), &fit_params[0], 
                             &fit_params[CENTROIDS_FIT_PARAMS_N]);
 

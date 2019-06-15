@@ -3,7 +3,7 @@ set(${lib}_LIBRARY ${lib} PARENT_SCOPE)
 
 set_property(SOURCE ${CMAKE_BINARY_DIR}/version.cpp PROPERTY GENERATED 1)
 set(src_files photons.cpp ${CMAKE_BINARY_DIR}/version.cpp)
-set(inc_files photons.h)
+set(inc_files centroids.h)
 
 add_library(${lib} SHARED ${src_files})
 

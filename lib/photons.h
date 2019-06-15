@@ -43,13 +43,7 @@
 #include <vector>
 #include <memory>
 
-extern const char* CENTROIDS_GIT_REV;
-extern const char* CENTROIDS_GIT_BRANCH;
-extern const char* CENTROIDS_GIT_VERSION;
-
-#define CENTROIDS_CENT_PIXEL                  0x8000
-#define CENTROIDS_TABLE_COLS                  8
-#define CENTROIDS_FIT_PARAMS_N                5
+#include "centroids.h"
 
 #ifdef DEBUG_OUTPUT
 #define DEBUG_PRINT(fmt, ...) \
@@ -90,31 +84,6 @@ struct centroids_pixel_lut {
 
 /* -------------------------------------------------------------------------*/
 /**
- * \brief Parameters for controlling the photon counting algorythm
- *
- * \tparam DT Data image datatype
- */
-/* -------------------------------------------------------------------------*/
-template <typename DT, typename OT>
-struct centroid_params {
-    int box;
-    int box_t;
-    int box_n;
-    int pixel_photon_num;
-    int overlap_max;
-    double sum_min;
-    double sum_max;
-    DT threshold;
-    size_t x;
-    size_t y;
-    size_t n;
-    int store_pixels;
-    int fit_pixels;
-    lm_control_struct control;
-};
-
-/* -------------------------------------------------------------------------*/
-/**
  * \brief
  *
  * @tparam DT
@@ -127,43 +96,8 @@ template <typename DT> struct photons {
     size_t y;
 };
 
-template<typename T>
-using PixelValues = std::vector<T>;
-template<typename T>
-using PixelValuesPtr = std::shared_ptr<PixelValues<T>>;
-
-enum {
-    CENTROIDS_PARAMS_OK = 0,
-    CENTROIDS_PARAMS_BAD = 1
-};
-
-enum {
-    CENTROIDS_LUT_OK = 0,
-    CENTROIDS_LUT_RANGE_LOW = 1,
-    CENTROIDS_LUT_RANGE_HIGH = 2
-};
-
-enum {
-    CENTROIDS_STORE_NONE = 0,
-    CENTROIDS_STORE_SORTED = 1,
-    CENTROIDS_STORE_UNSORTED = 2
-};
-
-enum {
-    CENTROIDS_FIT_NONE = 0,
-    CENTROIDS_FIT_LMMIN = 1
-};
-
-template <typename DT>
-using PhotonTable = std::vector<DT>;
 template <typename DT>
 using PhotonMap = std::vector<photons<DT>>;
-
-template <typename DT, typename OT>
-void centroids_initialize_params(centroid_params<DT, OT> *params);
-
-template <typename DT, typename OT>
-int centroids_calculate_params(centroid_params<DT, OT> *params);
 
 template <typename OT>
 int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
@@ -176,11 +110,6 @@ int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> *lut,
 template <typename OT>
 int centroids_lookup_pixel_lut(const centroids_pixel_lut<OT> &lut,
                                const OT ival, OT *oval);
-
-template<typename DT, typename OT>
-size_t centroids_process(DT *image, uint16_t *out,
-                         PhotonTable<OT> *photon_table,
-                         const centroid_params<DT, OT> &params);
 
 template<typename DT, typename OT>
 size_t centroids_process_photons(PhotonMap<DT> *photon_map,

@@ -39,7 +39,7 @@
 #include <vector>
 #include <memory>
 
-#include "photons.h"
+#include "centroids.h"
 
 namespace py = pybind11;
 
