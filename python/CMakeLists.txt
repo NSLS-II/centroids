@@ -8,5 +8,8 @@ pybind11_add_module(pycentroids EXCLUDE_FROM_ALL
 	${CMAKE_BINARY_DIR}/version.cpp
 )
 
+target_include_directories(pycentroids PUBLIC ${CMAKE_SOURCE_DIR}/lib)
+add_dependencies(pycentroids version_info)
+
 target_link_libraries(pycentroids PUBLIC liblmfit.so)
 target_link_libraries(pycentroids PUBLIC OpenMP::OpenMP_CXX)

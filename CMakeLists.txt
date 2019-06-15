@@ -39,7 +39,6 @@ add_custom_command(
 	${CMAKE_BINARY_DIR}/_version.cpp
 	COMMAND ${CMAKE_COMMAND} -P
 	${CMAKE_SOURCE_DIR}/cmake/version.cmake
-	DEPENDS ${CMAKE_BINARY_DIR}/_version.cpp
 )	
 
 add_custom_target(version_info DEPENDS ${CMAKE_BINARY_DIR}/version.cpp)
