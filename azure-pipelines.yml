@@ -29,6 +29,7 @@ jobs:
             flake8 .
         displayName: Run lint tests
       - script: |
+            cmake --version
             git clone --depth=1 https://jugit.fz-juelich.de/mlz/lmfit.git
             cd lmfit
             mkdir lmfit_build
