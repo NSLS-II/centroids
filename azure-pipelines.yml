@@ -28,6 +28,13 @@ jobs:
             source activate testenv
             flake8 .
         displayName: Run lint tests
+      - script: |
+            git clone --depth=1 https://jugit.fz-juelich.de/mlz/lmfit.git
+            cd lmfit
+            mkdir lmfit_build
+            cd lmfit_build
+            cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=YES ..
+        displayName: Build lmfit
       - bash: |
             source activate testenv
             python --version
