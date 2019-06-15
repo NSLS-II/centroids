@@ -47,18 +47,11 @@ extern const char* CENTROIDS_GIT_VERSION;
 
 py::tuple _find_photons(py::array_t<uint16_t> images,
                         uint16_t threshold, int box, int pixel_photon,
-                        int overlap_max, double sum_min, double sum_max) {
-    /* read input arrays buffer_info */
+                        int overlap_max, double sum_min, double sum_max,
+                        const std::string &store_pixels) {
+
+    // Do numpy array request to get size
     py::buffer_info buf1 = images.request();
-
-    /* allocate the output buffer */
-    py::array_t<uint16_t> result = py::array_t<uint16_t>(buf1.size);
-    py::buffer_info buf2 = result.request();
-
-    // Allcoate the table buffer
-
-    uint16_t *in_ptr = reinterpret_cast<uint16_t*>(buf1.ptr);
-    uint16_t *out_ptr = reinterpret_cast<uint16_t*>(buf2.ptr);
 
     centroid_params<uint16_t, double> params;
     centroids_initialize_params<uint16_t, double>(&params);
@@ -69,16 +62,33 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
     params.overlap_max = overlap_max;
     params.sum_min = sum_min;
     params.sum_max = sum_max;
-    params.store_pixels = CENTROIDS_STORE_NONE;
     params.fit_pixels = CENTROIDS_FIT_LMMIN;
     params.x = buf1.shape[2];
     params.y = buf1.shape[1];
     params.n = buf1.shape[0];
 
+    if (!store_pixels.compare("sorted")) {
+        params.store_pixels = CENTROIDS_STORE_SORTED;
+    } else if (!store_pixels.compare("unsorted")) {
+        params.store_pixels = CENTROIDS_STORE_UNSORTED;
+    } else if (!store_pixels.compare("none")) {
+        params.store_pixels = CENTROIDS_STORE_NONE;
+    } else {
+        throw std::invalid_argument("Invalid pixel store option");
+    }
+
     centroids_calculate_params<uint16_t>(&params);
 
+    // Do numpy arrays 
+    py::array_t<uint16_t> result = py::array_t<uint16_t>(buf1.size);
+    py::buffer_info buf2 = result.request();
+    uint16_t *in_ptr = reinterpret_cast<uint16_t*>(buf1.ptr);
+    uint16_t *out_ptr = reinterpret_cast<uint16_t*>(buf2.ptr);
+
+    // Setup the photon table
     PhotonTable<double>* photon_table(new PhotonTable<double>);
 
+    // Process photons
     size_t nphotons = centroids_process<uint16_t, double>(
             in_ptr, out_ptr, photon_table, params);
 
@@ -88,7 +98,8 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
     }
 
     if (params.fit_pixels != CENTROIDS_FIT_NONE) {
-        photon_table_cols += CENTROIDS_FIT_PARAMS_N + 1;
+        photon_table_cols += CENTROIDS_FIT_PARAMS_N;
+        photon_table_cols += CENTROIDS_FIT_EXTRA_N;
     }
 
     // The following is some jiggery-pokery so we dont
@@ -116,6 +127,7 @@ PYBIND11_MODULE(pycentroids, m) {
            py::arg("pixel_photon") = 10,
            py::arg("overlap_max") = 0,
            py::arg("sum_min") = 800,
-           py::arg("sum_max") = 1250);
+           py::arg("sum_max") = 1250,
+           py::arg("store_pixels") = "none");
      m.attr("__version__") = CENTROIDS_GIT_VERSION;
 }

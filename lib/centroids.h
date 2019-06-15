@@ -46,6 +46,7 @@ extern const char* CENTROIDS_GIT_VERSION;
 #define CENTROIDS_CENT_PIXEL                  0x8000
 #define CENTROIDS_TABLE_COLS                  8
 #define CENTROIDS_FIT_PARAMS_N                5
+#define CENTROIDS_FIT_EXTRA_N                 1
 
 enum {
     CENTROIDS_PARAMS_OK = 0,

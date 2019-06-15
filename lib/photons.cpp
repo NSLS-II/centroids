@@ -373,6 +373,7 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
     size_t n_photons = 0;
 
     std::unique_ptr<OT[]> pixel_cluster(new OT[params.box_t]);
+    std::unique_ptr<OT[]> pixel_cluster_sorted(new OT[params.box_t]);
     std::unique_ptr<OT[]> pixel_cluster_calc(new OT[params.box_t]);
     std::unique_ptr<OT[]> xvals(new OT[params.box_t]);
     std::unique_ptr<OT[]> yvals(new OT[params.box_t]);
@@ -426,11 +427,13 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
             }
             DEBUG_PRINT("sum = %lf\n", (double)sum);
 
+#ifdef DEBUG_OUTPUT
             for (int m = 0; m < params.box_t; m++) {
                 DEBUG_PRINT("sorted pixel = %lf x = %lf y = %lf\n",
                         (double)pixel_cluster[m], (double)xvals[m],
                         (double)yvals[m]);
             }
+#endif
 
             // Now check sum
             if ((sum >= params.sum_min)
@@ -454,7 +457,7 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
                          xvals[0] + ccomx, yvals[0] + ccomy,
                          sum, bgnd, (OT)box_sum});
 
-                // Now fit results
+                // Now fit results if required
                 if (params.fit_pixels) {
                     // Set the guess
                     fit_params[0] = xvals[0];
@@ -468,9 +471,10 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
                             centroids_evaluate_2dgauss, &params.control,
                             &fit_status);
 
+#ifdef DEBUG_OUTPUT
                     DEBUG_PRINT("FIT : status after %d evaluations:  %s\n",
                             fit_status.nfev, lm_infmsg[fit_status.outcome]);
-#ifdef DEBUG_OUTPUT
+
                     for (int i = 0; i < CENTROIDS_FIT_PARAMS_N; i++) {
                         DEBUG_PRINT("FIT : par[%i] = %12g\n", i, fit_params[i]);
                     }
@@ -498,9 +502,8 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
                 }
 
                 if (params.store_pixels == CENTROIDS_STORE_SORTED) {
-                    for (int m = 0; m < params.box_t; m++) {
-                        photon_table->push_back(pixel_cluster[m]);
-                    }
+                    photon_table->insert(photon_table->end(), 
+                            &pixel_cluster[0], &pixel_cluster[params.box_t]);
                 } else if (params.store_pixels == CENTROIDS_STORE_UNSORTED) {
                     for (int m = 0; m < params.box_t; m++) {
                         photon_table->push_back(*(photon[m].image));
