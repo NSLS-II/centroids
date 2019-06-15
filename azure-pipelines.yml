@@ -22,12 +22,25 @@ jobs:
       - bash: |
             source activate testenv
             conda install --yes --quiet --name testenv pybind11
-        displayName: Install Anaconda packages
+            python -m pip install flake8 cpplint
+        displayName: Install Python packages
       - script: |
             source activate testenv
-            python -m pip install flake8
             flake8 .
-        displayName: 'Run lint tests'
+        displayName: Run lint tests
+      - script: |
+            cmake --version
+            git clone --depth=1 https://jugit.fz-juelich.de/mlz/lmfit.git
+            cd lmfit
+            mkdir lmfit_build
+            cd lmfit_build
+            cmake -DBUILD_SHARED_LIBS=ON \
+                -DCMAKE_POSITION_INDEPENDENT_CODE=YES \
+                -DCMAKE_INSTALL_PREFIX=/usr \
+                ..
+            make
+            sudo make install
+        displayName: Build lmfit
       - bash: |
             source activate testenv
             python --version
@@ -56,13 +69,31 @@ jobs:
         - script: |
             python -m pip install sphinx sphinx-bootstrap-theme breathe
             sudo npm install -g gh-pages
+            sudo apt-get install flex bison
             git config user.email "ci-build@bnl.gov"
             git config user.name "ci-build"
           displayName: Install Deps
         - script: |
+            export DOXYGEN_VER=1.8.15
+            export DOXYGEN_TAR=${DOXYGEN_VER}.linux.bin.tar.gz
+            export DOXYGEN_URL="https://downloads.sourceforge.net/project/doxygen/rel-${DOXYGEN_VER}/doxygen-${DOXYGEN_VER}.src.tar.gz"
+            export TMP_DIR=${TMPDIR-/tmp}
+            export INSTALL_DIR=${TMP_DIR}/doxygen
+            wget -O - "${DOXYGEN_URL}" | tar xzf - -C ${TMP_DIR}
+            cd ${TMP_DIR}/doxygen-${DOXYGEN_VER}
+            mkdir build && cd build
+            cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ..
+            make
+            make install
+          displayName: Build and Install Doxygen
+        - bash: |
+            cd docs/doxygen
+            /tmp/doxygen/bin/doxygen
+          displayName: Build Doxygen Docs
+        - script: |
             cd docs
             make html
-          displayName: Build Docs
+          displayName: Build Sphinx Docs
         - script: |
             mkdir ~/.ssh && mv $DOWNLOADSECUREFILE_SECUREFILEPATH ~/.ssh/id_rsa
             chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_rsa

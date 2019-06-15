@@ -1,15 +1,52 @@
+//
+// CENTROIDS : C++ implementation of single photon counting for CCDs
+// Stuart B. Wilkins, Brookhaven National Laboratory
+//
+//
+// BSD 3-Clause License
+//
+// Copyright (c) 2019, Brookhaven Science Associates
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright notice,
+//    this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright notice,
+//    this list of conditions and the following disclaimer in the documentation
+//    and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the copyright holder nor the names of its
+//    contributors may be used to endorse or promote products derived from
+//    this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+// THE POSSIBILITY OF SUCH DAMAGE.
+
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <vector>
+#include <memory>
 
 #include "photons.h"
 #include "version.h"
 
-int _debug_print_flag = 1;
-
 namespace py = pybind11;
 
-py::tuple _find_photons(py::array_t<uint16_t> images)
-{
+py::tuple _find_photons(py::array_t<uint16_t> images,
+                        uint16_t threshold, int box, int pixel_photon,
+                        int overlap_max, double sum_min, double sum_max) {
     /* read input arrays buffer_info */
     py::buffer_info buf1 = images.request();
 
@@ -18,41 +55,66 @@ py::tuple _find_photons(py::array_t<uint16_t> images)
     py::buffer_info buf2 = result.request();
 
     // Allcoate the table buffer
-    
-    py::array_t<double> table = py::array_t<double>(100000 * 6);
-    py::buffer_info buf3 = table.request();
 
-    /* allocate the bias buffer */
-    py::array_t<double> bias = py::array_t<uint16_t>(buf1.size);
-    py::buffer_info buf4 = bias.request();
+    uint16_t *in_ptr = reinterpret_cast<uint16_t*>(buf1.ptr);
+    uint16_t *out_ptr = reinterpret_cast<uint16_t*>(buf2.ptr);
 
-    uint16_t *in_ptr = (uint16_t*)buf1.ptr;
-    uint16_t *out_ptr = (uint16_t*)buf2.ptr;
-    double *table_ptr = (double*)buf3.ptr;
-    double *bias_ptr = (double*)buf4.ptr;
-    size_t X = buf1.shape[1];
-    size_t Y = buf1.shape[0];
+    centroid_params<uint16_t, double> params;
+    centroids_initialize_params<uint16_t, double>(&params);
 
-    // Blank the table
+    params.threshold = threshold;
+    params.box = box;
+    params.pixel_photon_num = pixel_photon;
+    params.overlap_max = overlap_max;
+    params.sum_min = sum_min;
+    params.sum_max = sum_max;
+    params.store_pixels = CENTROIDS_STORE_NONE;
+    params.fit_pixels = CENTROIDS_FIT_LMMIN;
+    params.x = buf1.shape[2];
+    params.y = buf1.shape[1];
+    params.n = buf1.shape[0];
 
-    for(int i=0;i<1000*6;i++)
-    {
-        table_ptr[i] = 0.0;
+    centroids_calculate_params<uint16_t>(&params);
+
+    PhotonTable<double>* photon_table(new PhotonTable<double>);
+
+    size_t nphotons = centroids_process<uint16_t, double>(
+            in_ptr, out_ptr, photon_table, params);
+
+    size_t photon_table_cols = 9;
+    if (params.store_pixels != CENTROIDS_STORE_NONE) {
+        photon_table_cols += params.box_t;
     }
 
-    find_photons_uint16(in_ptr, out_ptr, table_ptr, bias_ptr, X, Y, 400);  
+    if (params.fit_pixels != CENTROIDS_FIT_NONE) {
+        photon_table_cols += CENTROIDS_FIT_PARAMS_N;
+    }
 
-    /* Reshape result to have same shape as input */
-    result.resize({Y, X});
-    bias.resize({Y, X});
-    table.resize({1000, 6});
+    // The following is some jiggery-pokery so we dont
+    // have to copy the vector....
+    auto capsule = py::capsule(photon_table, [](void *(photon_table))
+            { delete reinterpret_cast<std::vector<double>*>((photon_table)); });
+    auto table = py::array({static_cast<int>(nphotons),
+                            static_cast<int>(photon_table_cols)},
+                            photon_table->data(), capsule);
 
-    py::tuple args = py::make_tuple(table, result, bias);
+    // Reshape the output array...
+    result.resize({params.n, params.y, params.x});
+
+    py::tuple args = py::make_tuple(table, result);
     return args;
 }
 
 PYBIND11_MODULE(pycentroids, m) {
-   m.doc() = "Fast centroiding routines for CCD detectors";
-   m.def("find_photons", &_find_photons, "Find photons");
-   m.attr("__version__") = GIT_VERSION;
+     m.doc() = "Fast centroiding routines for CCD detectors";
+     m.def("find_photons", &_find_photons,
+           "Find photons",
+           py::arg("images"),
+           py::arg("threshold") = 200,
+           py::arg("box") = 2,
+           py::arg("pixel_photon") = 10,
+           py::arg("overlap_max") = 0,
+           py::arg("sum_min") = 800,
+           py::arg("sum_max") = 1250);
+     m.attr("__version__") = GIT_VERSION;
 }

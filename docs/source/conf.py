@@ -44,6 +44,10 @@ extensions = [
     'breathe'
 ]
 
+# Breathe docs
+breathe_projects = {"centroids": "../doxygen/xml/"}
+breathe_default_project = "centroids"
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -142,7 +146,8 @@ html_theme_options = {
     # * sandstone (v3 only)
     # * united
     # * yeti (v3 only)
-    'bootswatch_theme': "flatly",
+    # 'bootswatch_theme': "Cerulean",
+    'bootswatch_theme': "sandstone",
 
     # Choose Bootstrap version.
     # Values: "3" (default) or "2" (in quotes)

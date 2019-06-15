@@ -4,7 +4,12 @@ cmake_install.cmake
 Makefile
 libcentroids.a
 version.cpp
-
+.ipynb_checkpoints
+docs/doxygen/xml
+docs/doxygen/html
+docs/doxygen/latex
+*.txt
+*.h5
 #
 # Byte-compiled / optimized / DLL files
 __pycache__/
