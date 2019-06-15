@@ -4,13 +4,14 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 include(PreventInSourceBuilds)
 include(cpplint)
-cpplint_add_subdirectory(src)
+cpplint_add_subdirectory(centroids)
+cpplint_add_subdirectory(bindings)
 
 include_directories(/usr/local/include)
 link_directories(/usr/local/lib)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE OFF)
 option(PEDANTIC "Compile with pedantic warnings" ON)
 option(WERROR "Treat warnings as errors" OFF)
 option(DEBUG_OUTPUT "Print debug outout to stderr" ON)
@@ -40,13 +41,17 @@ ADD_CUSTOM_COMMAND(
 
 find_package(pybind11 REQUIRED)
 pybind11_add_module(pycentroids EXCLUDE_FROM_ALL
-	src/binding.cpp src/photons.cpp src/photons.h
+	bindings/binding.cpp
 	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
+
+target_include_directories(pycentroids PRIVATE centroids)
+target_link_directories(pycentroids PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(pycentroids PRIVATE liblmfit.so)
+target_link_libraries(pycentroids PRIVATE libcentroids.a)
 
 add_library(centroids
-	src/photons.cpp src/photons.h
+	centroids/photons.cpp centroids/photons.h
 	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
 target_link_libraries(centroids PRIVATE liblmfit.so)

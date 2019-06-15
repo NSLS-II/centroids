@@ -34,8 +34,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-#ifndef SRC_PHOTONS_H_
-#define SRC_PHOTONS_H_
+#ifndef CENTROIDS_PHOTONS_H_
+#define CENTROIDS_PHOTONS_H_
 
 #include <stdio.h>
 #include <stdint.h>
@@ -199,4 +199,4 @@ void centroids_swap(DT *a, DT *b);
 template <typename DT>
 void centroids_bubble_sort(DT *vals, DT *x, DT *y, const int n);
 
-#endif  // SRC_PHOTONS_H_
+#endif  // CENTROIDS_PHOTONS_H_
