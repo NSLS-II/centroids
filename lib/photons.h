@@ -34,14 +34,18 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 //
-#ifndef CENTROIDS_PHOTONS_H_
-#define CENTROIDS_PHOTONS_H_
+#ifndef LIB_PHOTONS_H_
+#define LIB_PHOTONS_H_
 
 #include <stdio.h>
 #include <stdint.h>
 #include <lmmin.h>
 #include <vector>
 #include <memory>
+
+extern const char* CENTROIDS_GIT_REV;
+extern const char* CENTROIDS_GIT_BRANCH;
+extern const char* CENTROIDS_GIT_VERSION;
 
 #define CENTROIDS_CENT_PIXEL                  0x8000
 #define CENTROIDS_TABLE_COLS                  8
@@ -60,6 +64,8 @@
 #define DEBUG_COMMENT(fmt) \
     do {} while (0)
 #endif
+
+#define UNUSED(expr) do { (void)(expr); } while (0)
 
 typedef struct {
     double *tx, *ty;
@@ -199,4 +205,4 @@ void centroids_swap(DT *a, DT *b);
 template <typename DT>
 void centroids_bubble_sort(DT *vals, DT *x, DT *y, const int n);
 
-#endif  // CENTROIDS_PHOTONS_H_
+#endif  // LIB_PHOTONS_H_

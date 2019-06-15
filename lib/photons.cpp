@@ -240,6 +240,7 @@ double centroids_2dgauss_int(double tx, double tz, const double *p) {
 
 void centroids_evaluate_2dgauss(const double *par, int m_dat,
         const void *data, double *fvec, int *info ) {
+    UNUSED(info);
     fit_data_struct *D;
     D = (fit_data_struct*)data;
 
@@ -298,6 +299,8 @@ size_t centroids_process(DT *image, uint16_t *out,
             photon_map.clear();
             fphotons = centroids_find_photons<DT, OT>(
                     image_p, out_p, &photon_map, params);
+
+            UNUSED(fphotons);
 
             DEBUG_PRINT("fphotons = %zu, photon_map.size() = %zu\n",
                     fphotons, photon_map.size());

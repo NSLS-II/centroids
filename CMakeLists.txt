@@ -1,20 +1,21 @@
 cmake_minimum_required(VERSION 3.12)
-project(centroids)
+project(centroids VERSION 0.1)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-include(PreventInSourceBuilds)
-include(cpplint)
-cpplint_add_subdirectory(centroids)
-cpplint_add_subdirectory(bindings)
+find_package(OpenMP REQUIRED)
 
-include_directories(/usr/local/include)
-link_directories(/usr/local/lib)
+include(PreventInSourceBuilds)
+
+include(cpplint)
+cpplint_add_subdirectory(lib)
+cpplint_add_subdirectory(python)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_VERBOSE_MAKEFILE OFF)
+
 option(PEDANTIC "Compile with pedantic warnings" ON)
 option(WERROR "Treat warnings as errors" OFF)
-option(DEBUG_OUTPUT "Print debug outout to stderr" ON)
+option(DEBUG_OUTPUT "Print debug outout to stderr" OFF)
+option(LIB_INSTALL "Install library" ON)
 
 if(PEDANTIC)
 	add_compile_options(-pedantic -Wall -Wextra)
@@ -25,7 +26,7 @@ if(WERROR)
 endif()
 
 if(DEBUG_OUTPUT)
- 	add_compile_options("-DDEBUG_OUTPUT")
+ 	add_compile_options(-DDEBUG_OUTPUT)
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
@@ -33,32 +34,16 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE
 # Add a custom command that produces version.cpp, plus
 # a dummy output that's not actually produced, in order
 # to force version.cmake to always be re-run before the build
-ADD_CUSTOM_COMMAND(
-	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
-	${CMAKE_CURRENT_BINARY_DIR}/_version.cpp
+add_custom_command(
+	OUTPUT ${CMAKE_BINARY_DIR}/version.cpp
+	${CMAKE_BINARY_DIR}/_version.cpp
 	COMMAND ${CMAKE_COMMAND} -P
-	${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.cmake)
+	${CMAKE_SOURCE_DIR}/cmake/version.cmake
+	DEPENDS ${CMAKE_BINARY_DIR}/_version.cpp
+)	
 
-find_package(pybind11 REQUIRED)
-pybind11_add_module(pycentroids EXCLUDE_FROM_ALL
-	bindings/binding.cpp
-	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
-)
+add_custom_target(version_info DEPENDS ${CMAKE_BINARY_DIR}/version.cpp)
 
-target_include_directories(pycentroids PRIVATE centroids)
-target_link_directories(pycentroids PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(pycentroids PRIVATE liblmfit.so)
-target_link_libraries(pycentroids PRIVATE libcentroids.a)
-
-add_library(centroids
-	centroids/photons.cpp centroids/photons.h
-	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
-)
-target_link_libraries(centroids PRIVATE liblmfit.so)
-
-find_package(OpenMP REQUIRED)
-if(OpenMP_CXX_FOUND)
-    target_link_libraries(pycentroids PUBLIC OpenMP::OpenMP_CXX)
-    target_link_libraries(centroids PUBLIC OpenMP::OpenMP_CXX)
-endif()
+add_subdirectory(lib)
+add_subdirectory(python)
 

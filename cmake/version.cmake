@@ -25,16 +25,16 @@ else()
     string(STRIP "${GIT_BRANCH}" GIT_BRANCH)
 endif()
 
-set(VERSION "const char* GIT_REV=\"${GIT_REV}\";
-const char* GIT_BRANCH=\"${GIT_BRANCH}\";
-const char* GIT_VERSION=\"${GIT_VERSION}${GIT_DIFF}\";")
+set(VERSION "const char* CENTROIDS_GIT_REV=\"${GIT_REV}\";
+const char* CENTROIDS_GIT_BRANCH=\"${GIT_BRANCH}\";
+const char* CENTROIDS_GIT_VERSION=\"${GIT_VERSION}${GIT_DIFF}\";")
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/version.cpp)
-    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.cpp VERSION_)
+if(EXISTS ${CMAKE_BINARY_DIR}/version.cpp)
+	file(READ ${CMAKE_BINARY_DIR}/version.cpp VERSION_)
 else()
     set(VERSION_ "")
 endif()
 
 if (NOT "${VERSION}" STREQUAL "${VERSION_}")
-    file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/version.cpp "${VERSION}")
+	file(WRITE ${CMAKE_BINARY_DIR}/version.cpp "${VERSION}")
 endif()

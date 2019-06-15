@@ -40,9 +40,10 @@
 #include <memory>
 
 #include "photons.h"
-#include "version.h"
 
 namespace py = pybind11;
+
+extern const char* CENTROIDS_GIT_VERSION;
 
 py::tuple _find_photons(py::array_t<uint16_t> images,
                         uint16_t threshold, int box, int pixel_photon,
@@ -116,5 +117,5 @@ PYBIND11_MODULE(pycentroids, m) {
            py::arg("overlap_max") = 0,
            py::arg("sum_min") = 800,
            py::arg("sum_max") = 1250);
-     m.attr("__version__") = GIT_VERSION;
+     m.attr("__version__") = CENTROIDS_GIT_VERSION;
 }
