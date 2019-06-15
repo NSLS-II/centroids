@@ -45,7 +45,7 @@ pybind11_add_module(pycentroids EXCLUDE_FROM_ALL
 	src/binding.cpp src/photons.cpp src/photons.h
 	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
-target_link_libraries(pycentroids PRIVATE liblmfit)
+#target_link_libraries(pycentroids PRIVATE liblmfit)
 
 add_library(centroids
 	src/photons.cpp src/photons.h
