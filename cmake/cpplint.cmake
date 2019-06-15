@@ -140,7 +140,7 @@ function(cpplint_add_subdirectory DIR)
         set(FILES_TO_CHECK   ${FILES_TO_CHECK} ${ABSOLUTE_DIR}/*.hpp)
     endif()
 
-	set(FILTERS -build/include_subdir)
+	set(FILTERS -build/include_subdir,-readability/casting)
 
     # find all source files inside project
     file(GLOB_RECURSE LIST_OF_FILES ${FILES_TO_CHECK})

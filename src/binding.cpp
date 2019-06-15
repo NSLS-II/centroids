@@ -69,6 +69,7 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
     params.sum_min = sum_min;
     params.sum_max = sum_max;
     params.store_pixels = CENTROIDS_STORE_NONE;
+    params.fit_pixels = CENTROIDS_FIT_LMMIN;
     params.x = buf1.shape[2];
     params.y = buf1.shape[1];
     params.n = buf1.shape[0];
@@ -83,6 +84,10 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
     size_t photon_table_cols = 9;
     if (params.store_pixels != CENTROIDS_STORE_NONE) {
         photon_table_cols += params.box_t;
+    }
+
+    if (params.fit_pixels != CENTROIDS_FIT_NONE) {
+        photon_table_cols += CENTROIDS_FIT_PARAMS_N;
     }
 
     // The following is some jiggery-pokery so we dont

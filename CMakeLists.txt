@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 3.12)
 project(centroids)
 
+include_directories(/usr/local/include)
+link_directories(/usr/local/lib)
+
 include(cmake/cpplint.cmake)
 cpplint_add_subdirectory(src)
 
 set(CMAKE_CXX_STANDARD 14)
 option(PEDANTIC "Compile with pedantic warnings" ON)
 option(WERROR "Treat warnings as errors" OFF)
-option(DEBUG_OUTPUT "Print debug outout to stderr" ON)
+option(DEBUG_OUTPUT "Print debug outout to stderr" OFF)
 
 if(PEDANTIC)
 	add_compile_options(-pedantic -Wall -Wextra)
@@ -37,6 +40,7 @@ pybind11_add_module(pycentroids
 	src/binding.cpp src/photons.cpp src/photons.h
 	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
+target_link_libraries(pycentroids PRIVATE liblmfit.a)
 
 add_library(centroids
 	src/photons.cpp src/photons.h

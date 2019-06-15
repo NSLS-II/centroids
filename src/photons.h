@@ -39,11 +39,13 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <lmmin.h>
 #include <vector>
 #include <memory>
 
 #define CENTROIDS_CENT_PIXEL                  0x8000
 #define CENTROIDS_TABLE_COLS                  8
+#define CENTROIDS_FIT_PARAMS_N                5
 
 #ifdef DEBUG_OUTPUT
 #define DEBUG_PRINT(fmt, ...) \
@@ -58,6 +60,12 @@
 #define DEBUG_COMMENT(fmt) \
     do {} while (0)
 #endif
+
+typedef struct {
+    double *tx, *ty;
+    double *y;
+    double (*f)( double tx, double tz, const double *p );
+} fit_data_struct;
 
 /* -------------------------------------------------------------------------*/
 /**
@@ -96,6 +104,7 @@ struct centroid_params {
     size_t n;
     int store_pixels;
     int fit_pixels;
+    lm_control_struct control;
 };
 
 /* -------------------------------------------------------------------------*/
@@ -132,6 +141,11 @@ enum {
     CENTROIDS_STORE_NONE = 0,
     CENTROIDS_STORE_SORTED = 1,
     CENTROIDS_STORE_UNSORTED = 2
+};
+
+enum {
+    CENTROIDS_FIT_NONE = 0,
+    CENTROIDS_FIT_LMMIN = 1
 };
 
 template <typename DT>
