@@ -33,7 +33,10 @@ jobs:
             cd lmfit
             mkdir lmfit_build
             cd lmfit_build
-            cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=YES ..
+            cmake -DBUILD_SHARED_LIBS=OFF \
+                -DCMAKE_POSITION_INDEPENDENT_CODE=YES \
+                -DCMAKE_INSTALL_PREFIX=/usr \
+                ..
         displayName: Build lmfit
       - bash: |
             source activate testenv
