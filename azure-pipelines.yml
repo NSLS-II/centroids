@@ -36,6 +36,7 @@ jobs:
             cmake -DBUILD_SHARED_LIBS=OFF \
                 -DCMAKE_POSITION_INDEPENDENT_CODE=YES \
                 -DCMAKE_INSTALL_PREFIX=/usr \
+                -DLIB_INSTALL=ON \
                 ..
         displayName: Build lmfit
       - bash: |
