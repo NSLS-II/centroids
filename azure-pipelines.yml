@@ -56,6 +56,32 @@ jobs:
                 --cov=com --cov-report=xml --cov-report=html
         displayName: 'Test with pytest'
 
+  - job: 'BuildLib'
+    pool:
+        vmImage: 'ubuntu-latest'
+    steps:
+        - script:
+            sudo apt-get install cmake
+          displayName: Install Deps
+        - script: |
+            cmake --version
+            git clone --depth=1 https://jugit.fz-juelich.de/mlz/lmfit.git
+            cd lmfit
+            mkdir lmfit_build
+            cd lmfit_build
+            cmake -DBUILD_SHARED_LIBS=ON \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=YES \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            ..
+            make
+            sudo make install
+          displayName: Build and Install lmfit
+        - script:
+            mkdir build
+            cd build
+            cmake -DBUILD_PYTHON=NO -DBUILD_DOCS=NO ..
+            make
+
   - job: 'BuildDocs'
     pool:
         vmImage: 'ubuntu-latest'
@@ -91,7 +117,10 @@ jobs:
         - bash: |
             mkdir builddir
             cd builddir
-            cmake -DBUILD_DOCS=ON -DCPPLINT_CHECK=OFF -DBUILD_PYTHON=OFF ..
+            cmake -DBUILD_DOCS=ON -DCPPLINT_CHECK=OFF \
+                  -DBUILD_PYTHON=OFF \
+                  -DOXYGEN_EXECUTABLE=/tmp/doxygen/doxygen \
+                  ..
             make docs
           displayName: Build Docs using CMake
         - script: |
