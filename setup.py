@@ -4,9 +4,17 @@ import sys
 import platform
 import subprocess
 
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
+
+pipe = subprocess.Popen('git describe --tags --always',
+                        stdout=subprocess.PIPE, shell=True)
+git = pipe.stdout.read().decode("utf-8").rstrip()
+git_release = git.lstrip('v')
+git_version = '.'.join(git_release.split('-')[0:2])
+
+cpus = os.cpu_count()
 
 
 class CMakeExtension(Extension):
@@ -50,11 +58,13 @@ class CMakeBuild(build_ext):
             build_args += ['--', '/m']
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
-            build_args += ['--target', 'pycentroids']
-            build_args += ['--', '-j2']
+            cmake_args += ['-DDEBUG_OUTPUT=ON']
+            # cmake_args += ['-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON']
+            build_args += ['--target', '_pycentroids']
+            build_args += ['--', '-j{}'.format(cpus)]
 
         env = os.environ.copy()
-        env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"' .format(
+        env['CXXFLAGS'] = '{} -DPY_VERSION_INFO=\\"{}\\"' .format(
             env.get('CXXFLAGS', ''),
             self.distribution.get_version())
         if not os.path.exists(self.build_temp):
@@ -71,7 +81,10 @@ setup(
     author_email='swilkins@bnl.gov',
     description='Centroiding algorithms for CCD Single Photon Counting',
     long_description='',
-    ext_modules=[CMakeExtension('pycentroids')],
+    packages=find_packages(),
+    setup_requires=["flake8"],
+    ext_modules=[CMakeExtension('_pycentroids')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
+    version=git_version
 )

@@ -36,6 +36,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/stl.h>
 #include <vector>
 #include <memory>
 
@@ -45,11 +46,37 @@ namespace py = pybind11;
 
 extern const char* CENTROIDS_GIT_VERSION;
 
+template <typename DT, typename OT>
+std::vector<std::string> get_column_names(
+        const centroid_params<DT, OT> &params) {
+    std::vector<std::string> names;
+
+    names.insert(names.end(),
+            &centroids_photon_table_names[0],
+            &centroids_photon_table_names[CENTROIDS_TABLE_COLS]);
+
+    if (params.fit_pixels != CENTROIDS_FIT_NONE) {
+        names.insert(names.end(),
+                &centroids_photon_table_names[CENTROIDS_TABLE_COLS],
+                &centroids_photon_table_names
+                    [CENTROIDS_TABLE_COLS
+                     + (2 * CENTROIDS_FIT_PARAMS_N)
+                     + CENTROIDS_FIT_EXTRA_N]);
+    }
+
+    if (params.store_pixels != CENTROIDS_STORE_NONE) {
+        for (int n = 0; n < params.box_t; n++) {
+            names.push_back(std::string("Pixel ") + std::to_string(n));
+        }
+    }
+
+    return names;
+}
+
 py::tuple _find_photons(py::array_t<uint16_t> images,
                         uint16_t threshold, int box, int pixel_photon,
                         int overlap_max, double sum_min, double sum_max,
                         const std::string &store_pixels) {
-
     // Do numpy array request to get size
     py::buffer_info buf1 = images.request();
 
@@ -79,7 +106,7 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
 
     centroids_calculate_params<uint16_t>(&params);
 
-    // Do numpy arrays 
+    // Do numpy arrays
     py::array_t<uint16_t> result = py::array_t<uint16_t>(buf1.size);
     py::buffer_info buf2 = result.request();
     uint16_t *in_ptr = reinterpret_cast<uint16_t*>(buf1.ptr);
@@ -92,13 +119,13 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
     size_t nphotons = centroids_process<uint16_t, double>(
             in_ptr, out_ptr, photon_table, params);
 
-    size_t photon_table_cols = 9;
+    size_t photon_table_cols = CENTROIDS_TABLE_COLS;
     if (params.store_pixels != CENTROIDS_STORE_NONE) {
         photon_table_cols += params.box_t;
     }
 
     if (params.fit_pixels != CENTROIDS_FIT_NONE) {
-        photon_table_cols += CENTROIDS_FIT_PARAMS_N;
+        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_N;
         photon_table_cols += CENTROIDS_FIT_EXTRA_N;
     }
 
@@ -113,11 +140,13 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
     // Reshape the output array...
     result.resize({params.n, params.y, params.x});
 
-    py::tuple args = py::make_tuple(table, result);
+    // Return also column names
+    std::vector<std::string>names = get_column_names(params);
+    py::tuple args = py::make_tuple(table, result, names);
     return args;
 }
 
-PYBIND11_MODULE(pycentroids, m) {
+PYBIND11_MODULE(_pycentroids, m) {
      m.doc() = "Fast centroiding routines for CCD detectors";
      m.def("find_photons", &_find_photons,
            "Find photons",

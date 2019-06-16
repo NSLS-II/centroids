@@ -38,13 +38,14 @@
 #define LIB_CENTROIDS_H_
 
 #include <lmmin.h>
+#include <vector>
 
 extern const char* CENTROIDS_GIT_REV;
 extern const char* CENTROIDS_GIT_BRANCH;
 extern const char* CENTROIDS_GIT_VERSION;
 
 #define CENTROIDS_CENT_PIXEL                  0x8000
-#define CENTROIDS_TABLE_COLS                  8
+#define CENTROIDS_TABLE_COLS                  9
 #define CENTROIDS_FIT_PARAMS_N                5
 #define CENTROIDS_FIT_EXTRA_N                 3
 
@@ -70,6 +71,7 @@ enum {
     CENTROIDS_FIT_LMMIN = 1
 };
 
+extern const char *centroids_photon_table_names[];
 
 /* -------------------------------------------------------------------------*/
 /**
