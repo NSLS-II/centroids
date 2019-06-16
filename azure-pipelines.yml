@@ -76,11 +76,12 @@ jobs:
             make
             sudo make install
           displayName: Build and Install lmfit
-        - script:
+        - script: |
             mkdir build
             cd build
             cmake -DBUILD_PYTHON=NO -DBUILD_DOCS=NO ..
             make
+          displayName: Build and Install
 
   - job: 'BuildDocs'
     pool:
