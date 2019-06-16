@@ -16,6 +16,14 @@ git_version = '.'.join(git_release.split('-')[0:2])
 
 cpus = os.cpu_count()
 
+here = os.path.abspath(os.path.dirname(__file__))
+
+with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
+with open(os.path.join(here, 'requirements.txt')) as f:
+    requirements = f.read().split()
+
 
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
@@ -80,9 +88,13 @@ setup(
     author='Stuart B. Wilkins',
     author_email='swilkins@bnl.gov',
     description='Centroiding algorithms for CCD Single Photon Counting',
-    long_description='',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    license='BSD (3-clause)',
+    url='https://github.com/NSLS-II/centroids',
     packages=find_packages(),
     setup_requires=["flake8"],
+    install_requires=requirements,
     ext_modules=[CMakeExtension('_pycentroids')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
