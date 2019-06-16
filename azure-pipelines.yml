@@ -91,7 +91,7 @@ jobs:
         - bash: |
             mkdir builddir
             cd builddir
-            cmake -DBUILD_DOCS=ON -DCPPLINT_CHECK=OFF ..
+            cmake -DBUILD_DOCS=ON -DCPPLINT_CHECK=OFF -DBUILD_PYTHON=OFF ..
             make docs
           displayName: Build Docs using CMake
         - script: |
