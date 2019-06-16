@@ -68,7 +68,7 @@ class CMakeBuild(build_ext):
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
             cmake_args += ['-DDEBUG_OUTPUT=OFF']
             cmake_args += ['-DBUILD_DOCS=OFF']
-            # cmake_args += ['-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON']
+            cmake_args += ['-DBUILD_LIB=OFF']
             build_args += ['--target', '_pycentroids']
             build_args += ['--', '-j{}'.format(cpus)]
 
