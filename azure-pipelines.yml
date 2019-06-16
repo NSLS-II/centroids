@@ -1,5 +1,5 @@
 jobs:
-  - job: 'Build_Test'
+  - job: 'BuildPython'
     pool:
       vmImage: 'ubuntu-latest'
     strategy:
@@ -56,7 +56,7 @@ jobs:
                 --cov=com --cov-report=xml --cov-report=html
         displayName: 'Test with pytest'
 
-  - job: 'Build_Docs'
+  - job: 'BuildDocs'
     pool:
         vmImage: 'ubuntu-latest'
     steps:
@@ -71,9 +71,9 @@ jobs:
         - script: |
             python -m pip install sphinx sphinx-bootstrap-theme breathe
             sudo npm install -g gh-pages
-            sudo apt-get install flex bison
-            git config user.email "ci-build@bnl.gov"
-            git config user.name "ci-build"
+            sudo apt-get install flex bison cmake
+            # git config user.email "ci-build@bnl.gov"
+            # git config user.name "ci-build"
           displayName: Install Deps
         - script: |
             export DOXYGEN_VER=1.8.15
@@ -89,13 +89,11 @@ jobs:
             make install
           displayName: Build and Install Doxygen
         - bash: |
-            cd docs/doxygen
-            /tmp/doxygen/bin/doxygen
-          displayName: Build Doxygen Docs
-        - script: |
-            cd docs
-            make html
-          displayName: Build Sphinx Docs
+            mkdir builddir
+            cd builddir
+            cmake ..
+            make docs
+          displayName: Build Docs using CMake
         - script: |
             mkdir ~/.ssh && mv $DOWNLOADSECUREFILE_SECUREFILEPATH ~/.ssh/id_rsa
             chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_rsa
