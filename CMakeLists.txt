@@ -2,21 +2,25 @@ cmake_minimum_required(VERSION 3.12)
 project(centroids VERSION 0.1)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+set(CMAKE_CXX_STANDARD 14)
+
 find_package(OpenMP REQUIRED)
 
 include(PreventInSourceBuilds)
 
-include(cpplint)
-cpplint_add_subdirectory(lib)
-cpplint_add_subdirectory(python)
-
-set(CMAKE_CXX_STANDARD 14)
 
 option(PEDANTIC "Compile with pedantic warnings" ON)
 option(WERROR "Treat warnings as errors" OFF)
 option(DEBUG_OUTPUT "Print debug outout to stderr" OFF)
 option(LIB_INSTALL "Install library" ON)
 option(BUILD_DOCS "Build documentation" ON)
+option(CPPLINT_CHECK "Check CXX Source for Formatting" ON)
+
+if(CPPLINT_CHECK)
+	include(cpplint)
+	cpplint_add_subdirectory(lib)
+	cpplint_add_subdirectory(python)
+endif()
 
 if(PEDANTIC)
 	add_compile_options(-pedantic -Wall -Wextra)
