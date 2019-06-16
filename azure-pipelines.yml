@@ -60,8 +60,13 @@ jobs:
     pool:
         vmImage: 'ubuntu-latest'
     steps:
+        - task: UsePythonVersion@0
+          inputs:
+              versionSpec: '3.6'
+              architecture: 'x64'
         - script:
             sudo apt-get install cmake
+            python -m pip install cpplint
           displayName: Install Deps
         - script: |
             cmake --version
