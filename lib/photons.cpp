@@ -154,6 +154,7 @@ void centroids_initialize_params(centroid_params<DT, OT> *params) {
     params->box_t = 25;
 
     params->pixel_photon_num = 9;
+    params->pixel_bgnd_num = 10;
     params->overlap_max = 0;
     params->sum_min = 0;
     params->sum_max = 10000;
@@ -239,15 +240,24 @@ double centroids_2dgauss_int(double tx, double tz, const double *p) {
     return out;
 }
 
-template <typename DT>
-DT centroids_std_error_estimate(DT *a, DT *b, const size_t N) {
+template <typename OT>
+OT centroids_std_error_estimate(OT *pixels, OT *xvals, OT *yvals, 
+        double *fit_params, const int N) {
 
-    DT sum = 0;
-    for (size_t i = 0;i < N; i++) {
-        sum += pow(a[i] - b[i], 2);
+    OT sum = 0;
+    for (int i = 0;i < N; i++) {
+        // Evaluate fit function at each point
+        OT calc = (OT)centroids_2dgauss_int(
+                (double)xvals[i], (double)yvals[i], fit_params);
+
+        DEBUG_PRINT("FIT actual = %lf fit = %lf residual = %lf\n",
+                (double)pixels[i], (double)calc,
+                (double)abs(pixel_cluster[i] - calc));
+
+        sum += pow(pixels[i] - calc, 2);
     }
 
-    sum /= (DT)N;
+    sum /= (OT)N;
 
     return pow(sum, 0.5);
 }
@@ -373,19 +383,23 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
     size_t n_photons = 0;
 
     std::unique_ptr<OT[]> pixel_cluster(new OT[params.box_t]);
-    std::unique_ptr<OT[]> pixel_cluster_sorted(new OT[params.box_t]);
-    std::unique_ptr<OT[]> pixel_cluster_calc(new OT[params.box_t]);
     std::unique_ptr<OT[]> xvals(new OT[params.box_t]);
     std::unique_ptr<OT[]> yvals(new OT[params.box_t]);
+
     double fit_params[CENTROIDS_FIT_PARAMS_N];
 
+    // Setup and store structures for fitting of 
+    // pixel data using liblmfit
     lm_status_struct fit_status;
     fit_data_struct fit_data = { (double*)xvals.get(), (double*)yvals.get(),
         (double*)pixel_cluster.get() , centroids_2dgauss_int};
 
+    // Loop over all pixel clusters
     for (auto photon = photon_map->begin();
          photon != photon_map->end(); photon+=params.box_t) {
         int box_sum = -params.box_t;
+
+        // Store the pixel values in working structures
         for (int m = 0; m < params.box_t; m++) {
             box_sum += static_cast<int>(*(photon[m].out) & 0x7FFF);
             pixel_cluster[m] = static_cast<double>(*photon[m].image);
@@ -395,124 +409,124 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
                     (double)pixel_cluster[m], (int)xvals[m], (int)yvals[m]);
         }
 
-        if (box_sum <= params.overlap_max) {
-            OT comx = 0;
-            OT comy = 0;
-            OT ccomx = 0;
-            OT ccomy = 0;
-            OT sum = 0;
-            OT bgnd = 0;
+        // Check the box sum, if it is too great
+        // then skip this pixel
+        if (box_sum > params.overlap_max){
+            continue;
+        }
 
-            // Bubble sort values
-            centroids_bubble_sort<OT>(pixel_cluster.get(),
-                                      xvals.get(), yvals.get(),
-                                      params.box_t);
+        OT comx  = 0;
+        OT comy  = 0;
+        OT ccomx = 0;
+        OT ccomy = 0;
+        OT sum   = 0;
+        OT bgnd  = 0;
 
-            // Now we process background
-            for (int n = params.pixel_photon_num; n < params.box_t; n++) {
-                bgnd += pixel_cluster[n];
-            }
-            bgnd /= (params.box_t - params.pixel_photon_num);
-            DEBUG_PRINT("bgnd = %lf (%d)\n",
-                    (double)bgnd, params.pixel_photon_num);
+        // Bubble sort values
+        centroids_bubble_sort<OT>(pixel_cluster.get(),
+                xvals.get(), yvals.get(),
+                params.box_t);
 
-            // Subtract Background
-            for (int n = 0; n < params.box_t; n++) {
-                pixel_cluster[n] -= bgnd;
-            }
+        // Now we process background
+        for (int n = params.pixel_bgnd_num; n < params.box_t; n++) {
+            bgnd += pixel_cluster[n];
+        }
+        bgnd /= (params.box_t - params.pixel_photon_num);
+        DEBUG_PRINT("bgnd = %lf (%d)\n",
+                (double)bgnd, params.pixel_photon_num);
 
-            // Now process sum
-            for (int n = 0; n < params.pixel_photon_num; n++) {
-                sum += pixel_cluster[n];
-            }
-            DEBUG_PRINT("sum = %lf\n", (double)sum);
+        // Subtract Background
+        for (int n = 0; n < params.box_t; n++) {
+            pixel_cluster[n] -= bgnd;
+        }
+
+        // Now process sum
+        for (int n = 0; n < params.pixel_photon_num; n++) {
+            sum += pixel_cluster[n];
+        }
+        DEBUG_PRINT("sum = %lf\n", (double)sum);
 
 #ifdef DEBUG_OUTPUT
+        for (int m = 0; m < params.box_t; m++) {
+            DEBUG_PRINT("sorted pixel = %lf x = %lf y = %lf\n",
+                    (double)pixel_cluster[m], (double)xvals[m],
+                    (double)yvals[m]);
+        }
+#endif
+
+        // Now check sum (total charge in spot)
+        if ((sum < params.sum_min) || (sum > params.sum_max)) {
+            continue;
+        }
+
+        // Calculate the COM
+        centroids_calculate_com<OT>(pixel_cluster, xvals, yvals,
+                &comx, &comy, params.box_t);
+        DEBUG_PRINT("COM = %lf, %lf (%lf, %lf)\n",
+                (double)comx, (double)comy,
+                (double)xvals[0], (double)yvals[0]);
+
+        // Correct COM using LUT for pixels
+        centroids_lookup_pixel_lut<OT>(pixel_lut,
+                comx - xvals[0], &ccomx);
+        centroids_lookup_pixel_lut<OT>(pixel_lut,
+                comy - yvals[0], &ccomy);
+
+        // Insert result into photon table
+        photon_table->insert(photon_table->end(),
+                {xvals[0], yvals[0], comx, comy,
+                xvals[0] + ccomx, yvals[0] + ccomy,
+                sum, bgnd, (OT)box_sum});
+
+        // Now fit results if required
+        if (params.fit_pixels) {
+            // Set the initial guess values
+            fit_params[0] = xvals[0];
+            fit_params[1] = yvals[0];
+            fit_params[2] = 0;
+            fit_params[3] = 100;
+            fit_params[4] = 0.5;
+
+            // Call lmmin to do the least squares fit
+            lmmin(CENTROIDS_FIT_PARAMS_N, fit_params, params.box_t,
+                    NULL, (const void*) &fit_data,
+                    centroids_evaluate_2dgauss, &params.control,
+                    &fit_status);
+            
+#ifdef DEBUG_OUTPUT
+            DEBUG_PRINT("FIT : status after %d evaluations:  %s\n",
+                    fit_status.nfev, lm_shortmsg[fit_status.outcome]);
+
+            for (int i = 0; i < CENTROIDS_FIT_PARAMS_N; i++) {
+                DEBUG_PRINT("FIT : par[%i] = %12g\n", i, fit_params[i]);
+            }
+#endif
+            // Add fit results to photon table
+            photon_table->insert(photon_table->end(), &fit_params[0], 
+                    &fit_params[CENTROIDS_FIT_PARAMS_N]);
+
+            // Calcuate the standard error
+
+            OT std_err = centroids_std_error_estimate<OT>(pixel_cluster.get(), 
+                    xvals.get(), yvals.get(), fit_params, params.box_t);
+
+            DEBUG_PRINT("FIT std err = %lf\n", (double)std_err);
+
+            photon_table->insert(photon_table->end(),
+                    {(OT)fit_status.fnorm, (OT)fit_status.outcome,
+                    std_err});
+        }
+
+        if (params.store_pixels == CENTROIDS_STORE_SORTED) {
+            photon_table->insert(photon_table->end(), 
+                    &pixel_cluster[0], &pixel_cluster[params.box_t]);
+        } else if (params.store_pixels == CENTROIDS_STORE_UNSORTED) {
             for (int m = 0; m < params.box_t; m++) {
-                DEBUG_PRINT("sorted pixel = %lf x = %lf y = %lf\n",
-                        (double)pixel_cluster[m], (double)xvals[m],
-                        (double)yvals[m]);
+                photon_table->push_back(*(photon[m].image));
             }
-#endif
+        }
 
-            // Now check sum
-            if ((sum >= params.sum_min)
-                && (sum < params.sum_max)) {
-                // Calculate the COM
-                centroids_calculate_com<OT>(pixel_cluster, xvals, yvals,
-                        &comx, &comy, params.box_t);
-                DEBUG_PRINT("COM = %lf, %lf (%lf, %lf)\n",
-                        (double)comx, (double)comy,
-                        (double)xvals[0], (double)yvals[0]);
-
-                // Correct COM
-                centroids_lookup_pixel_lut<OT>(pixel_lut,
-                        comx - xvals[0], &ccomx);
-                centroids_lookup_pixel_lut<OT>(pixel_lut,
-                        comy - yvals[0], &ccomy);
-
-                // Insert result
-                photon_table->insert(photon_table->end(),
-                        {xvals[0], yvals[0], comx, comy,
-                         xvals[0] + ccomx, yvals[0] + ccomy,
-                         sum, bgnd, (OT)box_sum});
-
-                // Now fit results if required
-                if (params.fit_pixels) {
-                    // Set the guess
-                    fit_params[0] = xvals[0];
-                    fit_params[1] = yvals[0];
-                    fit_params[2] = 0;
-                    fit_params[3] = 100;
-                    fit_params[4] = 0.5;
-
-                    lmmin(CENTROIDS_FIT_PARAMS_N, fit_params, params.box_t,
-                            NULL, (const void*) &fit_data,
-                            centroids_evaluate_2dgauss, &params.control,
-                            &fit_status);
-
-#ifdef DEBUG_OUTPUT
-                    DEBUG_PRINT("FIT : status after %d evaluations:  %s\n",
-                            fit_status.nfev, lm_infmsg[fit_status.outcome]);
-
-                    for (int i = 0; i < CENTROIDS_FIT_PARAMS_N; i++) {
-                        DEBUG_PRINT("FIT : par[%i] = %12g\n", i, fit_params[i]);
-                    }
-#endif
-                    // Add fit results
-                    photon_table->insert(photon_table->end(), &fit_params[0], 
-                            &fit_params[CENTROIDS_FIT_PARAMS_N]);
-
-                    // Calcuate the standard error
-                    for (int i = 0;i < params.box_t; i++) {
-                        pixel_cluster_calc[i] = (OT)centroids_2dgauss_int(
-                                (double)xvals[i], (double)yvals[i], fit_params);
-                        DEBUG_PRINT("FIT actual = %lf fit = %lf residual = %lf\n",
-                                (double)pixel_cluster[i], (double)pixel_cluster_calc[i], 
-                                (double)abs(pixel_cluster[i] - pixel_cluster_calc[i]));
-                    }
-
-                    OT std_err = centroids_std_error_estimate<OT>(pixel_cluster.get(), 
-                            pixel_cluster_calc.get(), params.box_t);
-
-                    DEBUG_PRINT("FIT std err = %lf\n", (double)std_err);
-
-                    photon_table->push_back(std_err);
-                     
-                }
-
-                if (params.store_pixels == CENTROIDS_STORE_SORTED) {
-                    photon_table->insert(photon_table->end(), 
-                            &pixel_cluster[0], &pixel_cluster[params.box_t]);
-                } else if (params.store_pixels == CENTROIDS_STORE_UNSORTED) {
-                    for (int m = 0; m < params.box_t; m++) {
-                        photon_table->push_back(*(photon[m].image));
-                    }
-                }
-
-                n_photons++;
-            }  // sum is correct
-        }  // overlap is correct
+        n_photons++;
     }
 
     DEBUG_PRINT("Vector Size = %zu\n", photon_table->size());

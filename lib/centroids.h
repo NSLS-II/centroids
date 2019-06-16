@@ -46,7 +46,7 @@ extern const char* CENTROIDS_GIT_VERSION;
 #define CENTROIDS_CENT_PIXEL                  0x8000
 #define CENTROIDS_TABLE_COLS                  8
 #define CENTROIDS_FIT_PARAMS_N                5
-#define CENTROIDS_FIT_EXTRA_N                 1
+#define CENTROIDS_FIT_EXTRA_N                 3
 
 enum {
     CENTROIDS_PARAMS_OK = 0,
@@ -84,6 +84,7 @@ struct centroid_params {
     int box_t;
     int box_n;
     int pixel_photon_num;
+    int pixel_bgnd_num;
     int overlap_max;
     double sum_min;
     double sum_max;
