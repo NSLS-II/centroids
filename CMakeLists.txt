@@ -16,6 +16,7 @@ option(PEDANTIC "Compile with pedantic warnings" ON)
 option(WERROR "Treat warnings as errors" OFF)
 option(DEBUG_OUTPUT "Print debug outout to stderr" OFF)
 option(LIB_INSTALL "Install library" ON)
+option(BUILD_DOCS "Build documentation" ON)
 
 if(PEDANTIC)
 	add_compile_options(-pedantic -Wall -Wextra)
@@ -45,4 +46,5 @@ add_custom_target(version_info DEPENDS ${CMAKE_BINARY_DIR}/version.cpp)
 
 add_subdirectory(lib)
 add_subdirectory(python)
-
+add_subdirectory(docs)
+add_subdirectory(docs/doxygen)
