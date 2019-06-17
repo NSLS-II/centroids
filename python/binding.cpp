@@ -72,8 +72,9 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
                         int overlap_max, double sum_min, double sum_max,
                         const std::string &return_pixels, bool return_map) {
     py::list out_list;
-    py::buffer_info buf1 = images.request();
-    uint16_t *in_ptr = reinterpret_cast<uint16_t*>(buf1.ptr);
+
+    py::buffer_info images_buffer = images.request();
+    uint16_t *images_ptr = reinterpret_cast<uint16_t*>(images_buffer.ptr);
 
     PhotonTable<double>* photon_table(new PhotonTable<double>);
     std::vector<uint16_t>* pixels = NULL;
@@ -88,9 +89,9 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
     params.sum_min = sum_min;
     params.sum_max = sum_max;
     params.fit_pixels = CENTROIDS_FIT_LMMIN;
-    params.x = buf1.shape[2];
-    params.y = buf1.shape[1];
-    params.n = buf1.shape[0];
+    params.x = images_buffer.shape[2];
+    params.y = images_buffer.shape[1];
+    params.n = images_buffer.shape[0];
     params.return_map = return_map;
 
     if (!return_pixels.compare("sorted")) {
@@ -107,20 +108,22 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
         pixels = new std::vector<uint16_t>;
     }
 
-    centroids_calculate_params<uint16_t>(&params);
+    if (centroids_calculate_params<uint16_t>(&params)
+            != CENTROIDS_PARAMS_OK) {
+        throw std::invalid_argument("Invalid parameter combination");
+    }
 
     // Setup our array if needed
     uint16_t *out_ptr = NULL;
     py::array_t<uint16_t> result;
     if (return_map) {
-        result = py::array_t<uint16_t>(buf1.size);
+        result = py::array_t<uint16_t>(images_buffer.size);
         py::buffer_info buf2 = result.request();
         out_ptr = reinterpret_cast<uint16_t*>(buf2.ptr);
     }
 
-
     size_t nphotons = centroids_process<uint16_t, double>(
-            in_ptr, out_ptr, photon_table, pixels, params);
+            images_ptr, out_ptr, photon_table, pixels, params);
 
     size_t photon_table_cols = CENTROIDS_TABLE_COLS;
 
@@ -178,6 +181,7 @@ PYBIND11_MODULE(_pycentroids, m) {
            py::arg("sum_min"),
            py::arg("sum_max"),
            py::arg("return_pixels"),
-           py::arg("return_map"));
+           py::arg("return_map"),
+           py::call_guard<py::gil_scoped_release>());
      m.attr("__version__") = CENTROIDS_GIT_VERSION;
 }

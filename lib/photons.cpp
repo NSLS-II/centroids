@@ -184,6 +184,16 @@ int centroids_calculate_params(centroid_params<DT, OT> *params) {
     params->box_n = (params->box * 2) + 1;
     params->box_t = params->box_n * params->box_n;
 
+    if ((params->pixel_photon_num <= 0)
+        || (params->pixel_photon_num >= params->box_t)) {
+        return CENTROIDS_PARAMS_BAD;
+    }
+
+    if ((params->pixel_bgnd_num <= 0)
+        || (params->pixel_bgnd_num >= params->box_t)) {
+        return CENTROIDS_PARAMS_BAD;
+    }
+
     return CENTROIDS_PARAMS_OK;
 }
 

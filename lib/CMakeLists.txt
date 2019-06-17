@@ -18,6 +18,8 @@ set_target_properties(
     VERSION ${centroids_VERSION_MAJOR}
     SOVERSION ${centroids_VERSION_MINOR})
 
+add_dependencies(${lib} ${CPPLINT_TARGET})
+
 if (LIB_INSTALL)
     install(
         TARGETS ${lib} LIBRARY
