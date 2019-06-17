@@ -160,7 +160,8 @@ void centroids_initialize_params(centroid_params<DT, OT> *params) {
     params->sum_min = 0;
     params->sum_max = 10000;
     params->threshold = 100;
-    params->store_pixels = CENTROIDS_STORE_NONE;
+    params->return_pixels = CENTROIDS_STORE_NONE;
+    params->return_map = false;
     params->fit_pixels = 0;
 
     params->control = lm_control_double;
@@ -292,6 +293,7 @@ void centroids_evaluate_2dgauss(const double *par, int m_dat,
 template<typename DT, typename OT>
 size_t centroids_process(DT *image, uint16_t *out,
                          PhotonTable<OT> *photon_table,
+                         std::vector<DT> *photons,
                          const centroid_params<DT, OT> &params) {
     size_t n_photons = 0;
 
@@ -311,15 +313,26 @@ size_t centroids_process(DT *image, uint16_t *out,
     #pragma omp parallel shared(n_photons)
     {
         PhotonTable<OT> local_photon_table;
+        std::vector<DT> local_photons;
         size_t local_n_photons = 0;
         PhotonMap<DT> photon_map;
+        uint16_t *out_p;
+
+        if (!params.return_map) {
+            out_p = new uint16_t[params.x * params.y];
+        } else {
+            out_p = out;
+        }
 
         #pragma omp for
         for (size_t n = 0; n < params.n; n++) {
             // Get he pointers for the input and output images
             DT *image_p = image + (n * params.x * params.y);
-            uint16_t *out_p = out + (n * params.x * params.y);
             size_t fphotons, pphotons;
+
+            if (params.return_map) {
+               out_p = out + (n * params.x * params.y);
+            }
 
             photon_map.clear();
             fphotons = centroids_find_photons<DT, OT>(
@@ -331,7 +344,8 @@ size_t centroids_process(DT *image, uint16_t *out,
                     fphotons, photon_map.size());
 
             pphotons = centroids_process_photons<DT, OT>(
-                    &photon_map, &local_photon_table, pixel_lut, params);
+                    &photon_map, &local_photon_table, pixel_lut,
+                    &local_photons, params);
 
             DEBUG_PRINT("Image %zu Found %zu photons, processed %zu photons\n",
                     n, fphotons, pphotons);
@@ -344,8 +358,19 @@ size_t centroids_process(DT *image, uint16_t *out,
             photon_table->insert(photon_table->end(),
                     std::make_move_iterator(local_photon_table.begin()),
                     std::make_move_iterator(local_photon_table.end()));
+
+            if(params.return_pixels != CENTROIDS_STORE_NONE) {
+                photons->insert(photons->end(),
+                        std::make_move_iterator(local_photons.begin()),
+                        std::make_move_iterator(local_photons.end()));
+            }
+
             DEBUG_PRINT("local_n_photons = %zu\n", local_n_photons);
             n_photons += local_n_photons;
+
+            if (!params.return_map) {
+                delete [] out_p;
+            }
         }
     }
 
@@ -380,7 +405,7 @@ int centroids_calculate_com(const std::unique_ptr <DT[]> &pixels,
 template<typename DT, typename OT>
 size_t centroids_process_photons(PhotonMap<DT> *photon_map,
         PhotonTable<OT> *photon_table, const centroids_pixel_lut<OT> &pixel_lut,
-        const centroid_params<DT, OT> &params) {
+        std::vector<DT> *photons, const centroid_params<DT, OT> &params) {
     size_t n_photons = 0;
 
     std::unique_ptr<OT[]> pixel_cluster(new OT[params.box_t]);
@@ -520,12 +545,12 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
                     std_err});
         }
 
-        if (params.store_pixels == CENTROIDS_STORE_SORTED) {
-            photon_table->insert(photon_table->end(),
+        if (params.return_pixels == CENTROIDS_STORE_SORTED) {
+            photons->insert(photons->end(),
                     &pixel_cluster[0], &pixel_cluster[params.box_t]);
-        } else if (params.store_pixels == CENTROIDS_STORE_UNSORTED) {
+        } else if (params.return_pixels == CENTROIDS_STORE_UNSORTED) {
             for (int m = 0; m < params.box_t; m++) {
-                photon_table->push_back(*(photon[m].image));
+                photons->push_back(*(photon[m].image));
             }
         }
 
@@ -658,6 +683,7 @@ template int centroids_calculate_params<uint16_t, double>(
         centroid_params<uint16_t, double> *params);
 template size_t centroids_process<uint16_t, double>(
         uint16_t *image, uint16_t *out, PhotonTable<double> *photon_table,
+        std::vector<uint16_t> *photons,
         const centroid_params<uint16_t, double> &params);
 
 template void centroids_initialize_params<uint16_t, float>(
@@ -666,4 +692,5 @@ template int centroids_calculate_params<uint16_t, float>(
         centroid_params<uint16_t, float> *params);
 template size_t centroids_process<uint16_t, float>(
         uint16_t *image, uint16_t *out, PhotonTable<float> *photon_table,
+        std::vector<uint16_t> *photons,
         const centroid_params<uint16_t, float> &params);

@@ -94,7 +94,8 @@ struct centroid_params {
     size_t x;
     size_t y;
     size_t n;
-    int store_pixels;
+    int return_pixels;
+    bool return_map;
     int fit_pixels;
     lm_control_struct control;
 };
@@ -111,6 +112,6 @@ int centroids_calculate_params(centroid_params<DT, OT> *params);
 template<typename DT, typename OT>
 size_t centroids_process(DT *image, uint16_t *out,
                          PhotonTable<OT> *photon_table,
+                         std::vector<DT> *photons,
                          const centroid_params<DT, OT> &params);
-
 #endif  // LIB_CENTROIDS_H_

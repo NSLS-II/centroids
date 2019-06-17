@@ -64,21 +64,19 @@ std::vector<std::string> get_column_names(
                      + CENTROIDS_FIT_EXTRA_N]);
     }
 
-    if (params.store_pixels != CENTROIDS_STORE_NONE) {
-        for (int n = 0; n < params.box_t; n++) {
-            names.push_back(std::string("Pixel ") + std::to_string(n));
-        }
-    }
-
     return names;
 }
 
 py::tuple _find_photons(py::array_t<uint16_t> images,
                         uint16_t threshold, int box, int pixel_photon,
                         int overlap_max, double sum_min, double sum_max,
-                        const std::string &store_pixels) {
-    // Do numpy array request to get size
+                        const std::string &return_pixels, bool return_map) {
+    py::list out_list;
     py::buffer_info buf1 = images.request();
+    uint16_t *in_ptr = reinterpret_cast<uint16_t*>(buf1.ptr);
+
+    PhotonTable<double>* photon_table(new PhotonTable<double>);
+    std::vector<uint16_t>* pixels = NULL;
 
     centroid_params<uint16_t, double> params;
     centroids_initialize_params<uint16_t, double>(&params);
@@ -93,36 +91,38 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
     params.x = buf1.shape[2];
     params.y = buf1.shape[1];
     params.n = buf1.shape[0];
+    params.return_map = return_map;
 
-    if (!store_pixels.compare("sorted")) {
-        params.store_pixels = CENTROIDS_STORE_SORTED;
-    } else if (!store_pixels.compare("unsorted")) {
-        params.store_pixels = CENTROIDS_STORE_UNSORTED;
-    } else if (!store_pixels.compare("none")) {
-        params.store_pixels = CENTROIDS_STORE_NONE;
+    if (!return_pixels.compare("sorted")) {
+        params.return_pixels = CENTROIDS_STORE_SORTED;
+    } else if (!return_pixels.compare("unsorted")) {
+        params.return_pixels = CENTROIDS_STORE_UNSORTED;
+    } else if (!return_pixels.compare("none")) {
+        params.return_pixels = CENTROIDS_STORE_NONE;
     } else {
         throw std::invalid_argument("Invalid pixel store option");
     }
 
+    if(params.return_pixels != CENTROIDS_STORE_NONE) {
+        pixels = new std::vector<uint16_t>;
+    }
+
     centroids_calculate_params<uint16_t>(&params);
 
-    // Do numpy arrays
-    py::array_t<uint16_t> result = py::array_t<uint16_t>(buf1.size);
-    py::buffer_info buf2 = result.request();
-    uint16_t *in_ptr = reinterpret_cast<uint16_t*>(buf1.ptr);
-    uint16_t *out_ptr = reinterpret_cast<uint16_t*>(buf2.ptr);
+    // Setup our array if needed
+    uint16_t *out_ptr = NULL;
+    py::array_t<uint16_t> result;
+    if (return_map) {
+        result = py::array_t<uint16_t>(buf1.size);
+        py::buffer_info buf2 = result.request();
+        out_ptr = reinterpret_cast<uint16_t*>(buf2.ptr);
+    }
 
-    // Setup the photon table
-    PhotonTable<double>* photon_table(new PhotonTable<double>);
 
-    // Process photons
     size_t nphotons = centroids_process<uint16_t, double>(
-            in_ptr, out_ptr, photon_table, params);
+            in_ptr, out_ptr, photon_table, pixels, params);
 
     size_t photon_table_cols = CENTROIDS_TABLE_COLS;
-    if (params.store_pixels != CENTROIDS_STORE_NONE) {
-        photon_table_cols += params.box_t;
-    }
 
     if (params.fit_pixels != CENTROIDS_FIT_NONE) {
         photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_N;
@@ -136,14 +136,34 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
     auto table = py::array({static_cast<int>(nphotons),
                             static_cast<int>(photon_table_cols)},
                             photon_table->data(), capsule);
-
-    // Reshape the output array...
-    result.resize({params.n, params.y, params.x});
+    out_list.append(table);
 
     // Return also column names
     std::vector<std::string>names = get_column_names(params);
-    py::tuple args = py::make_tuple(table, result, names);
-    return args;
+    out_list.append(names);
+
+    // Reshape the output array...
+    if (return_map) {
+        result.resize({params.n, params.y, params.x});
+        out_list.append(result);
+    } else {
+        out_list.append(pybind11::cast<pybind11::none>(Py_None));
+    }
+
+    if (params.return_pixels != CENTROIDS_STORE_NONE) {
+        auto pixels_capsule = py::capsule(pixels, [](void *(pixels))
+                { delete reinterpret_cast<std::vector<uint16_t>*>((pixels)); });
+        auto pixels_array = py::array({static_cast<int>(nphotons),
+                static_cast<int>(params.box_t)},
+                pixels->data(), pixels_capsule);
+
+        out_list.append(pixels_array);
+    } else {
+        out_list.append(pybind11::cast<pybind11::none>(Py_None));
+    }
+
+    py::tuple out(out_list);
+    return out;
 }
 
 PYBIND11_MODULE(_pycentroids, m) {
@@ -151,12 +171,13 @@ PYBIND11_MODULE(_pycentroids, m) {
      m.def("find_photons", &_find_photons,
            "Find photons",
            py::arg("images"),
-           py::arg("threshold") = 200,
-           py::arg("box") = 2,
-           py::arg("pixel_photon") = 10,
-           py::arg("overlap_max") = 0,
-           py::arg("sum_min") = 800,
-           py::arg("sum_max") = 1250,
-           py::arg("store_pixels") = "none");
+           py::arg("threshold"),
+           py::arg("box"),
+           py::arg("pixel_photon"),
+           py::arg("overlap_max"),
+           py::arg("sum_min"),
+           py::arg("sum_max"),
+           py::arg("return_pixels"),
+           py::arg("return_map"));
      m.attr("__version__") = CENTROIDS_GIT_VERSION;
 }
