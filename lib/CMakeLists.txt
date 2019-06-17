@@ -18,7 +18,10 @@ set_target_properties(
     VERSION ${centroids_VERSION_MAJOR}
     SOVERSION ${centroids_VERSION_MINOR})
 
-add_dependencies(${lib} ${CPPLINT_TARGET})
+if(CPPLINT_CHECK)
+	add_dependencies(${lib} ${CPPLINT_TARGET})
+	message(STATUS "Checking CXX Code via cpplint")
+endif()
 
 if (LIB_INSTALL)
     install(
