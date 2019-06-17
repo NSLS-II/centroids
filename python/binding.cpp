@@ -103,7 +103,7 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
         throw std::invalid_argument("Invalid pixel store option");
     }
 
-    if(params.return_pixels != CENTROIDS_STORE_NONE) {
+    if (params.return_pixels != CENTROIDS_STORE_NONE) {
         pixels = new std::vector<uint16_t>;
     }
 

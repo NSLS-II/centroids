@@ -13,4 +13,4 @@ def find_photons(images, threshold=200, box=2, pixel_photon=10, overlap_max=0,
     df = pd.DataFrame(_rtn[0], columns=_rtn[1])
 
     rtn = (df, ) + _rtn[2:]
-    return rtn;
+    return rtn
