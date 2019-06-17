@@ -1,5 +1,5 @@
 jobs:
-  - job: 'Build_Test'
+  - job: 'BuildPython'
     pool:
       vmImage: 'ubuntu-latest'
     strategy:
@@ -23,6 +23,7 @@ jobs:
             source activate testenv
             conda install --yes --quiet --name testenv pybind11
             python -m pip install flake8 cpplint
+            python -m pip install -r requirements.txt
         displayName: Install Python packages
       - script: |
             source activate testenv
@@ -55,7 +56,39 @@ jobs:
                 --cov=com --cov-report=xml --cov-report=html
         displayName: 'Test with pytest'
 
-  - job: 'Build_Docs'
+  - job: 'BuildLib'
+    pool:
+        vmImage: 'ubuntu-latest'
+    steps:
+        - task: UsePythonVersion@0
+          inputs:
+              versionSpec: '3.6'
+              architecture: 'x64'
+        - script: |
+            sudo apt-get install cmake
+            python -m pip install cpplint
+          displayName: Install Deps
+        - script: |
+            cmake --version
+            git clone --depth=1 https://jugit.fz-juelich.de/mlz/lmfit.git
+            cd lmfit
+            mkdir lmfit_build
+            cd lmfit_build
+            cmake -DBUILD_SHARED_LIBS=ON \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=YES \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            ..
+            make
+            sudo make install
+          displayName: Build and Install lmfit
+        - script: |
+            mkdir build
+            cd build
+            cmake -DBUILD_PYTHON=NO -DBUILD_DOCS=NO ..
+            make
+          displayName: Build and Install
+
+  - job: 'BuildDocs'
     pool:
         vmImage: 'ubuntu-latest'
     steps:
@@ -70,9 +103,9 @@ jobs:
         - script: |
             python -m pip install sphinx sphinx-bootstrap-theme breathe
             sudo npm install -g gh-pages
-            sudo apt-get install flex bison
-            git config user.email "ci-build@bnl.gov"
-            git config user.name "ci-build"
+            sudo apt-get install flex bison cmake
+            # git config user.email "ci-build@bnl.gov"
+            # git config user.name "ci-build"
           displayName: Install Deps
         - script: |
             export DOXYGEN_VER=1.8.15
@@ -88,13 +121,14 @@ jobs:
             make install
           displayName: Build and Install Doxygen
         - bash: |
-            cd docs/doxygen
-            /tmp/doxygen/bin/doxygen
-          displayName: Build Doxygen Docs
-        - script: |
-            cd docs
-            make html
-          displayName: Build Sphinx Docs
+            mkdir builddir
+            cd builddir
+            cmake -DBUILD_DOCS=ON -DCPPLINT_CHECK=OFF \
+                  -DBUILD_PYTHON=OFF \
+                  -DOXYGEN_EXECUTABLE=/tmp/doxygen/doxygen \
+                  ..
+            make docs
+          displayName: Build Docs using CMake
         - script: |
             mkdir ~/.ssh && mv $DOWNLOADSECUREFILE_SECUREFILEPATH ~/.ssh/id_rsa
             chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_rsa

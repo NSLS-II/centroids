@@ -24,7 +24,8 @@ project = 'centroids'
 copyright = '2019, Stuart B. Wilkins'
 author = 'Stuart B. Wilkins'
 
-pipe = Popen('git describe --tags --always', stdout=PIPE, shell=True)
+pipe = Popen('git describe --tags --always', stdout=PIPE, shell=True,
+             cwd="@CMAKE_SOURCE_DIR@")
 git = pipe.stdout.read().decode("utf-8").rstrip()
 release = git.lstrip('R')
 version = '-'.join(release.split('-')[0:2])
@@ -45,7 +46,7 @@ extensions = [
 ]
 
 # Breathe docs
-breathe_projects = {"centroids": "../doxygen/xml/"}
+breathe_projects = {"centroids": "@DOXYGEN_XML_DIR@"}
 breathe_default_project = "centroids"
 
 # Add any paths that contain templates here, relative to this directory.

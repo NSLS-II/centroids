@@ -45,6 +45,10 @@
 
 #include "centroids.h"
 
+#ifndef __FILENAME__
+#define __FILENAME__ __FILE__
+#endif
+
 #ifdef DEBUG_OUTPUT
 #define DEBUG_PRINT(fmt, ...) \
   fprintf(stderr, "%s:%d:%s(): " fmt, \
@@ -61,11 +65,23 @@
 
 #define UNUSED(expr) do { (void)(expr); } while (0)
 
-typedef struct {
-    double *tx, *ty;
-    double *y;
-    double (*f)( double tx, double tz, const double *p );
-} fit_data_struct;
+const char *centroids_photon_table_names[] = {
+    "Pixel X", "Pixel Y",
+    "COM X", "COM Y", "COR COM X", "COR COM Y",
+    "Int", "Bgnd", "Overlap",
+    "Fit X", "Fit Y", "Fit Bgnd", "Fit Amp", "Fit Sigma",
+    "Fit Err X", "Fit Err Y", "Fit Err Bgnd", "Fit Err Amp", "Fit Err Sigma",
+    "Fit Fnorm", "Fit Outcome", "Fit StdErr"
+};
+
+
+template <typename OT>
+struct fit_data_struct {
+    OT *x;
+    OT *y;
+    OT *z;
+    OT (*f)(OT x, OT y, const double *p );
+};
 
 /* -------------------------------------------------------------------------*/
 /**
@@ -113,9 +129,8 @@ int centroids_lookup_pixel_lut(const centroids_pixel_lut<OT> &lut,
 
 template<typename DT, typename OT>
 size_t centroids_process_photons(PhotonMap<DT> *photon_map,
-                                 PhotonTable<OT> *photon_table,
-                                 const centroids_pixel_lut<OT> &pixel_lut,
-                                 centroid_params<DT, OT> *params);
+        PhotonTable<OT> *photon_table, const centroids_pixel_lut<OT> &pixel_lut,
+        std::vector<DT> *photons, const centroid_params<DT, OT> &params);
 
 template<typename DT, typename OT>
 size_t centroids_find_photons(DT *image, uint16_t *out,
@@ -134,7 +149,16 @@ void centroids_swap(DT *a, DT *b);
 template <typename DT>
 void centroids_bubble_sort(DT *vals, DT *x, DT *y, const int n);
 
-template <typename DT>
-DT centroids_std_error_estimate(DT *a, DT *b, const size_t N);
+template <typename OT>
+OT centroids_std_error_estimate(OT *pixels, OT *xvals, OT *yvals,
+        double *fit_params, const int N);
+
+template <typename OT>
+OT centroids_2dgauss_int(OT x, OT y, const double *p);
+
+template <typename OT>
+void centroids_evaluate_2dgauss(const double *par, int m_dat,
+        const void *data, double *fvec, int *info);
+
 
 #endif  // LIB_PHOTONS_H_

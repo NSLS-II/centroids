@@ -4,9 +4,25 @@ import sys
 import platform
 import subprocess
 
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
+
+pipe = subprocess.Popen('git describe --tags --always',
+                        stdout=subprocess.PIPE, shell=True)
+git = pipe.stdout.read().decode("utf-8").rstrip()
+git_release = git.lstrip('v')
+git_version = '.'.join(git_release.split('-')[0:2])
+
+cpus = os.cpu_count()
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
+with open(os.path.join(here, 'requirements.txt')) as f:
+    requirements = f.read().split()
 
 
 class CMakeExtension(Extension):
@@ -50,11 +66,14 @@ class CMakeBuild(build_ext):
             build_args += ['--', '/m']
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
-            build_args += ['--target', 'pycentroids']
-            build_args += ['--', '-j2']
+            cmake_args += ['-DDEBUG_OUTPUT=OFF']
+            cmake_args += ['-DBUILD_DOCS=OFF']
+            cmake_args += ['-DBUILD_LIB=OFF']
+            build_args += ['--target', '_pycentroids']
+            build_args += ['--', '-j{}'.format(cpus)]
 
         env = os.environ.copy()
-        env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"' .format(
+        env['CXXFLAGS'] = '{} -DPY_VERSION_INFO=\\"{}\\"' .format(
             env.get('CXXFLAGS', ''),
             self.distribution.get_version())
         if not os.path.exists(self.build_temp):
@@ -70,8 +89,15 @@ setup(
     author='Stuart B. Wilkins',
     author_email='swilkins@bnl.gov',
     description='Centroiding algorithms for CCD Single Photon Counting',
-    long_description='',
-    ext_modules=[CMakeExtension('pycentroids')],
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    license='BSD (3-clause)',
+    url='https://github.com/NSLS-II/centroids',
+    packages=find_packages(),
+    setup_requires=["flake8"],
+    install_requires=requirements,
+    ext_modules=[CMakeExtension('_pycentroids')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
+    version=git_version
 )

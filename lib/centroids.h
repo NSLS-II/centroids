@@ -38,15 +38,16 @@
 #define LIB_CENTROIDS_H_
 
 #include <lmmin.h>
+#include <vector>
 
 extern const char* CENTROIDS_GIT_REV;
 extern const char* CENTROIDS_GIT_BRANCH;
 extern const char* CENTROIDS_GIT_VERSION;
 
 #define CENTROIDS_CENT_PIXEL                  0x8000
-#define CENTROIDS_TABLE_COLS                  8
+#define CENTROIDS_TABLE_COLS                  9
 #define CENTROIDS_FIT_PARAMS_N                5
-#define CENTROIDS_FIT_EXTRA_N                 1
+#define CENTROIDS_FIT_EXTRA_N                 3
 
 enum {
     CENTROIDS_PARAMS_OK = 0,
@@ -70,6 +71,7 @@ enum {
     CENTROIDS_FIT_LMMIN = 1
 };
 
+extern const char *centroids_photon_table_names[];
 
 /* -------------------------------------------------------------------------*/
 /**
@@ -84,6 +86,7 @@ struct centroid_params {
     int box_t;
     int box_n;
     int pixel_photon_num;
+    int pixel_bgnd_num;
     int overlap_max;
     double sum_min;
     double sum_max;
@@ -91,7 +94,8 @@ struct centroid_params {
     size_t x;
     size_t y;
     size_t n;
-    int store_pixels;
+    int return_pixels;
+    bool return_map;
     int fit_pixels;
     lm_control_struct control;
 };
@@ -108,6 +112,6 @@ int centroids_calculate_params(centroid_params<DT, OT> *params);
 template<typename DT, typename OT>
 size_t centroids_process(DT *image, uint16_t *out,
                          PhotonTable<OT> *photon_table,
+                         std::vector<DT> *photons,
                          const centroid_params<DT, OT> &params);
-
 #endif  // LIB_CENTROIDS_H_
