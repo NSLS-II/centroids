@@ -108,6 +108,7 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
         pixels = new std::vector<uint16_t>;
     }
 
+
     if (centroids_calculate_params<uint16_t>(&params)
             != CENTROIDS_PARAMS_OK) {
         throw std::invalid_argument("Invalid parameter combination");
@@ -122,8 +123,12 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
         out_ptr = reinterpret_cast<uint16_t*>(buf2.ptr);
     }
 
+    pybind11::gil_scoped_release release;
+
     size_t nphotons = centroids_process<uint16_t, double>(
             images_ptr, out_ptr, photon_table, pixels, params);
+
+    pybind11::gil_scoped_acquire acquire;
 
     size_t photon_table_cols = CENTROIDS_TABLE_COLS;
 
@@ -131,6 +136,8 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
         photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_N;
         photon_table_cols += CENTROIDS_FIT_EXTRA_N;
     }
+
+    fprintf(stderr, "Finished centroids_process\n");
 
     // The following is some jiggery-pokery so we dont
     // have to copy the vector....
@@ -181,7 +188,7 @@ PYBIND11_MODULE(_pycentroids, m) {
            py::arg("sum_min"),
            py::arg("sum_max"),
            py::arg("return_pixels"),
-           py::arg("return_map"),
-           py::call_guard<py::gil_scoped_release>());
+           py::arg("return_map"));
+           // py::call_guard<py::gil_scoped_release>());
      m.attr("__version__") = CENTROIDS_GIT_VERSION;
 }
