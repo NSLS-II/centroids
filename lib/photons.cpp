@@ -359,7 +359,7 @@ size_t centroids_process(DT *image, uint16_t *out,
                     std::make_move_iterator(local_photon_table.begin()),
                     std::make_move_iterator(local_photon_table.end()));
 
-            if(params.return_pixels != CENTROIDS_STORE_NONE) {
+            if (params.return_pixels != CENTROIDS_STORE_NONE) {
                 photons->insert(photons->end(),
                         std::make_move_iterator(local_photons.begin()),
                         std::make_move_iterator(local_photons.end()));
