@@ -125,7 +125,7 @@ jobs:
             cd builddir
             cmake -DBUILD_DOCS=ON -DCPPLINT_CHECK=OFF \
                   -DBUILD_PYTHON=OFF \
-                  -DOXYGEN_EXECUTABLE=/tmp/doxygen/doxygen \
+                  -DDOXYGEN_EXECUTABLE=/tmp/doxygen/bin/doxygen \
                   ..
             make docs
           displayName: Build Docs using CMake
