@@ -94,7 +94,7 @@ setup(
     license='BSD (3-clause)',
     url='https://github.com/NSLS-II/centroids',
     packages=find_packages(),
-    setup_requires=[]
+    setup_requires=[],
     install_requires=requirements,
     ext_modules=[CMakeExtension('_pycentroids')],
     cmdclass=dict(build_ext=CMakeBuild),
