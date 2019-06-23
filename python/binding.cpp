@@ -37,12 +37,14 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
+#include <omp.h>
 #include <vector>
 #include <memory>
 
 #include "centroids.h"
 
 namespace py = pybind11;
+using namespace pybind11::literals;
 
 extern const char* CENTROIDS_GIT_VERSION;
 
@@ -67,10 +69,16 @@ std::vector<std::string> get_column_names(
     return names;
 }
 
-py::tuple _find_photons(py::array_t<uint16_t> images,
-                        uint16_t threshold, int box, int pixel_photon,
-                        int overlap_max, double sum_min, double sum_max,
-                        const std::string &return_pixels, bool return_map) {
+py::dict omp_info(void) {
+    auto d1 = py::dict("max_threads"_a=omp_get_max_threads());
+
+    return d1;
+}
+
+py::tuple find_photons(py::array_t<uint16_t> images,
+                       uint16_t threshold, int box, int pixel_photon,
+                       int overlap_max, double sum_min, double sum_max,
+                       const std::string &return_pixels, bool return_map) {
     py::list out_list;
 
     py::buffer_info images_buffer = images.request();
@@ -178,7 +186,8 @@ py::tuple _find_photons(py::array_t<uint16_t> images,
 
 PYBIND11_MODULE(_pycentroids, m) {
      m.doc() = "Fast centroiding routines for CCD detectors";
-     m.def("find_photons", &_find_photons,
+
+     m.def("find_photons", &find_photons,
            "Find photons",
            py::arg("images"),
            py::arg("threshold"),
@@ -189,6 +198,9 @@ PYBIND11_MODULE(_pycentroids, m) {
            py::arg("sum_max"),
            py::arg("return_pixels"),
            py::arg("return_map"));
-           // py::call_guard<py::gil_scoped_release>());
+
+     m.def("opm_info", &omp_info,
+             "Return OpenMP info");
+
      m.attr("__version__") = CENTROIDS_GIT_VERSION;
 }
