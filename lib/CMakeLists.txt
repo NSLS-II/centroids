@@ -11,7 +11,7 @@ add_dependencies(${lib} version_info)
 
 target_link_libraries(${lib} PUBLIC "${LMFIT_LIB}")
 target_link_libraries(${lib} PUBLIC OpenMP::OpenMP_CXX)
-target_include_directories(${lib} PUBLIC ${LMFIT_INCLUDE})
+target_include_directories(${lib} PRIVATE ${LMFIT_INCLUDE})
 
 set_target_properties(
     ${lib} PROPERTIES
