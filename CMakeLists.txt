@@ -56,8 +56,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE
 
 find_library(LMFIT_LIB lmfit)
 find_path(LMFIT_INCLUDE lmmin.h)
-message(STATUS "Found lmfit library: ${LMFIT_LIB}")
 message(STATUS "Found lmmin.h : ${LMFIT_INCLUDE}")
+message(STATUS "Found lmfit library: ${LMFIT_LIB}")
+add_library(lmfit STATIC IMPORTED)
+set_target_properties(lmfit PROPERTIES
+	IMPORTED_LOCATION "${LMFIT_LIB}")
 
 # Add a custom command that produces version.cpp, plus
 # a dummy output that's not actually produced, in order

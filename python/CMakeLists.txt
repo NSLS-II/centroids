@@ -20,5 +20,5 @@ if(CPPLINT_CHECK)
 	message(STATUS "Checking CXX Code via cpplint")
 endif()
 
-target_link_libraries(_pycentroids PUBLIC "${LMFIT_LIB}")
+target_link_libraries(_pycentroids PUBLIC lmfit)
 target_link_libraries(_pycentroids PUBLIC OpenMP::OpenMP_CXX)
