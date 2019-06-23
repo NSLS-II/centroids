@@ -44,7 +44,6 @@
 #include "centroids.h"
 
 namespace py = pybind11;
-using namespace pybind11::literals;
 
 extern const char* CENTROIDS_GIT_VERSION;
 
@@ -70,13 +69,13 @@ std::vector<std::string> get_column_names(
 }
 
 py::dict omp_info(void) {
-    auto d1 = py::dict("threads_max"_a=
+    auto d1 = py::dict(py::arg("threads_max") =
             omp_get_max_threads());
-    d1 = py::dict("threads_limit"_a=
+    d1 = py::dict(py::arg("threads_limit") =
             omp_get_thread_limit(), **d1);
-    d1 = py::dict("num_procs"_a=
+    d1 = py::dict(py::arg("num_procs") =
             omp_get_num_procs(), **d1);
-    d1 = py::dict("dynamic"_a=
+    d1 = py::dict(py::arg("dynamic") =
             omp_get_dynamic(), **d1);
 
     return d1;
