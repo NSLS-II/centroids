@@ -48,7 +48,14 @@ if(BUILD_LIB)
 	add_subdirectory(lib)
 endif()
 
+# Add __FILENAME__ with short path
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
+
+# This uses the lmfit lib
+
+find_library(LMFIT_LIB lmfit)
+message(STATUS "Using lmfit library ${LMFIT_LIB}")
 
 # Add a custom command that produces version.cpp, plus
 # a dummy output that's not actually produced, in order
