@@ -70,7 +70,14 @@ std::vector<std::string> get_column_names(
 }
 
 py::dict omp_info(void) {
-    auto d1 = py::dict("max_threads"_a=omp_get_max_threads());
+    auto d1 = py::dict("threads_max"_a=
+            omp_get_max_threads());
+    d1 = py::dict("threads_limit"_a=
+            omp_get_thread_limit(), **d1);
+    d1 = py::dict("num_procs"_a=
+            omp_get_num_procs(), **d1);
+    d1 = py::dict("dynamic"_a=
+            omp_get_dynamic(), **d1);
 
     return d1;
 }
@@ -199,7 +206,7 @@ PYBIND11_MODULE(_pycentroids, m) {
            py::arg("return_pixels"),
            py::arg("return_map"));
 
-     m.def("opm_info", &omp_info,
+     m.def("omp_info", &omp_info,
              "Return OpenMP info");
 
      m.attr("__version__") = CENTROIDS_GIT_VERSION;
