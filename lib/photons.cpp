@@ -470,7 +470,8 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
         for (int n = params.pixel_bgnd_num; n < params.box_t; n++) {
             bgnd += pixel_cluster[n];
         }
-        bgnd /= (params.box_t - params.pixel_photon_num);
+        bgnd /= (params.box_t - params.pixel_photon_num - 1);
+
         DEBUG_PRINT("bgnd = %lf (%d)\n",
                 (double)bgnd, params.pixel_photon_num);
 

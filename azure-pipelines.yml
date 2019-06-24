@@ -21,7 +21,7 @@ jobs:
         displayName: Create Anaconda environment
       - bash: |
             source activate testenv
-            conda install --yes --quiet --name testenv pybind11
+            conda install --yes --quiet --name testenv pybind11 scipy
             python -m pip install flake8 cpplint
             python -m pip install -r requirements.txt
         displayName: Install Python packages
@@ -45,15 +45,12 @@ jobs:
         displayName: Build lmfit
       - bash: |
             source activate testenv
-            python --version
             python setup.py install
         displayName: Install using setup.py
       - script: |
             source activate testenv
             pip install pytest
-            pip install pytest-cov
-            pytest tests --doctest-modules --junitxml=junit/test-results.xml \
-                --cov=com --cov-report=xml --cov-report=html
+            pytest tests 
         displayName: 'Test with pytest'
 
   - job: 'BuildLib'
