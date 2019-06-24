@@ -82,12 +82,18 @@ py::dict omp_info(void) {
 }
 
 py::tuple find_photons(py::array_t<uint16_t> images,
-                       uint16_t threshold, int box, int pixel_photon,
+                       uint16_t threshold, int box,
+                       int pixel_photon, int pixel_bgnd,
                        int overlap_max, double sum_min, double sum_max,
                        const std::string &return_pixels, bool return_map) {
     py::list out_list;
 
     py::buffer_info images_buffer = images.request();
+
+    if (images_buffer.ndim != 3) {
+        throw std::runtime_error("Number of dimensions must be 3");
+    }
+
     uint16_t *images_ptr = reinterpret_cast<uint16_t*>(images_buffer.ptr);
 
     PhotonTable<double>* photon_table(new PhotonTable<double>);
@@ -99,6 +105,7 @@ py::tuple find_photons(py::array_t<uint16_t> images,
     params.threshold = threshold;
     params.box = box;
     params.pixel_photon_num = pixel_photon;
+    params.pixel_bgnd_num = pixel_bgnd;
     params.overlap_max = overlap_max;
     params.sum_min = sum_min;
     params.sum_max = sum_max;
@@ -199,6 +206,7 @@ PYBIND11_MODULE(_pycentroids, m) {
            py::arg("threshold"),
            py::arg("box"),
            py::arg("pixel_photon"),
+           py::arg("pixel_bgnd"),
            py::arg("overlap_max"),
            py::arg("sum_min"),
            py::arg("sum_max"),
