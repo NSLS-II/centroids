@@ -47,36 +47,40 @@ def test_null(dataframe):
 
 def test_find_photons(dataframe, gauss):
     x = 17
-    y = 12
+    y = 20
+    cen_x = 0.2
+    cen_y = 0.15
     sigma = 0.46
     bgnd = 150
+    box = 2
+    pixel_photon = 9
+    pixel_bgnd = 10
 
-    photon = gauss(2, 0, 0, 500, sigma)
-    photon_int = photon[1:-1, 1:-1].sum()
-    print(photon_int)
+    photon = gauss(box, cen_x, cen_y, 500, sigma)
+    data = dataframe((1, 1400, 1200), bgnd, 5)
 
-    data = np.ones((1, 100, 120)) * bgnd
-    data[0, 10:15, 15:20] += photon
+    data[0, y-box:y+box+1, x-box:x+box+1] += photon
     data = data.astype(np.uint16)
 
-    int_photon = data[0, 10:15, 15:20]
+    int_photon = data[0, y-box:y+box+1, x-box:x+box+1]
     photon_sorted = np.sort(int_photon.ravel())[::-1]
-    photon_bgnd = photon_sorted[10:].mean().astype(np.uint16)
-    photon_sorted -= photon_bgnd
-    photon_int = photon_sorted[:9].sum()
+    photon_bgnd = photon_sorted[pixel_bgnd:].mean()
+    photon_int = (photon_sorted[:pixel_photon] - photon_bgnd).sum()
+    photon_bgnd = photon_sorted[pixel_bgnd:].mean()
 
     table, grid, photons = find_photons(data.astype(np.uint16),
-                                        threshold=250, box=2,
+                                        threshold=250, box=box,
                                         sum_min=800, sum_max=1200,
-                                        pixel_photon=9, pixel_bgnd=10)
+                                        pixel_photon=pixel_photon,
+                                        pixel_bgnd=pixel_bgnd)
 
     assert len(table) == 1
     assert table['Pixel X'][0] == x
     assert table['Pixel Y'][0] == y
-    assert pytest.approx(table['Fit X'][0], 0.025) == x
-    assert pytest.approx(table['Fit Y'][0], 0.025) == y
-    assert pytest.approx(table['COM X'][0], 0.01) == x
-    assert pytest.approx(table['COM Y'][0], 0.01) == y
+    assert pytest.approx(table['Fit X'][0], 0.01) == x + cen_x
+    assert pytest.approx(table['Fit Y'][0], 0.01) == y + cen_y
+    assert pytest.approx(table['COM X'][0], 0.01) == x + cen_x
+    assert pytest.approx(table['COM Y'][0], 0.01) == y + cen_y
     assert pytest.approx(table['Fit Sigma'][0], 0.01) == sigma
-    assert table['Bgnd'][0] == photon_bgnd
-    assert table['Int'][0] == photon_int
+    assert pytest.approx(table['Bgnd'][0]) == photon_bgnd
+    assert pytest.approx(table['Int'][0]) == photon_int
