@@ -45,11 +45,11 @@ jobs:
         displayName: Build lmfit
       - bash: |
             source activate testenv
-            python --version
             python setup.py install
         displayName: Install using setup.py
       - script: |
             source activate testenv
+            conda install scipy
             pip install pytest
             pip install pytest-cov
             pytest tests --doctest-modules --junitxml=junit/test-results.xml \
