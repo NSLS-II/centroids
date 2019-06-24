@@ -50,7 +50,7 @@ jobs:
       - script: |
             source activate testenv
             pip install pytest
-            pytest tests 
+            pytest --pyargs pycentroids.tests
         displayName: 'Test with pytest'
 
   - job: 'BuildLib'
