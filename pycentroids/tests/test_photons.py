@@ -54,7 +54,7 @@ def test_find_photons(dataframe, gauss):
     bgnd = 150
     box = 2
     pixel_photon = 9
-    pixel_bgnd = 10
+    pixel_bgnd = 12
 
     photon = gauss(box, cen_x, cen_y, 500, sigma)
     data = dataframe((1, 1400, 1200), bgnd, 5)
