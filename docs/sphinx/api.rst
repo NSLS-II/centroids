@@ -1,6 +1,12 @@
 Centroids API
 =============
 
+Python API
+----------
+
+.. autofunction:: pycentroids.find_photons
+
+
 Initialization Functions
 ------------------------
 
