@@ -9,8 +9,10 @@ add_library(${lib} SHARED ${src_files})
 
 add_dependencies(${lib} version_info)
 
-target_link_libraries(${lib} PUBLIC lmfit)
-target_link_libraries(${lib} PUBLIC OpenMP::OpenMP_CXX)
+target_link_libraries(${lib} PUBLIC ${LMFIT_LIB})
+if(OpenMP_FOUND)
+	target_link_libraries(_pycentroids PUBLIC OpenMP::OpenMP_CXX)
+endif()
 target_include_directories(${lib} PUBLIC ${LMFIT_INCLUDE})
 
 set_target_properties(
