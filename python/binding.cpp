@@ -70,7 +70,7 @@ std::vector<std::string> get_column_names(
     return names;
 }
 
-py::dict omp_info(void) {
+py::object omp_info(void) {
 #ifdef _OPENMP
     auto d1 = py::dict(py::arg("threads_max") =
             omp_get_max_threads());
@@ -82,7 +82,7 @@ py::dict omp_info(void) {
             omp_get_dynamic(), **d1);
     return d1;
 #else
-    return pybind11::cast<pybind11::none>(Py_None);
+    return py::cast<py::none>(Py_None);
 #endif
 }
 
