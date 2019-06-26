@@ -38,7 +38,6 @@
 #include <lmmin.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <omp.h>
 #include <math.h>
 #include <vector>
 #include <memory>
