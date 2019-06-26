@@ -4,7 +4,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 set(CMAKE_CXX_STANDARD 14)
 
-find_package(OpenMP REQUIRED)
+find_package(OpenMP)
 
 include(PreventInSourceBuilds)
 

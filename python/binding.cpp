@@ -37,7 +37,9 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 #include <vector>
 #include <memory>
 
@@ -69,6 +71,7 @@ std::vector<std::string> get_column_names(
 }
 
 py::dict omp_info(void) {
+#ifdef _OPENMP
     auto d1 = py::dict(py::arg("threads_max") =
             omp_get_max_threads());
     d1 = py::dict(py::arg("threads_limit") =
@@ -77,8 +80,10 @@ py::dict omp_info(void) {
             omp_get_num_procs(), **d1);
     d1 = py::dict(py::arg("dynamic") =
             omp_get_dynamic(), **d1);
-
     return d1;
+#else
+    return pybind11::cast<pybind11::none>(Py_None);
+#endif
 }
 
 py::tuple find_photons(py::array_t<uint16_t> images,
