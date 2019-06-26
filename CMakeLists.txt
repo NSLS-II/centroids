@@ -36,6 +36,37 @@ if(DEBUG_OUTPUT)
  	add_compile_options(-DDEBUG_OUTPUT)
 endif()
 
+# Add __FILENAME__ with short path
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
+
+# This uses the lmfit lib
+
+find_library(LMFIT_LIB lmfit)
+find_path(LMFIT_INCLUDE lmmin.h)
+message(STATUS "System : ${CMAKE_SYSTEM_NAME}")
+message(STATUS "Found lmmin.h : ${LMFIT_INCLUDE}")
+message(STATUS "Found lmfit library: ${LMFIT_LIB}")
+add_library(lmfit STATIC IMPORTED)
+set_target_properties(lmfit PROPERTIES
+	IMPORTED_LOCATION "${LMFIT_LIB}")
+
+# # Fix for not looking in /usr/local
+# if(CMAKE_SYSTEM_NAME STREQUAL Darwin)
+# 	set(CMAKE_REQUIRED_INCLUDES "/usr/local/include")
+# endif()
+
+# Add a custom command that produces version.cpp, plus
+# a dummy output that's not actually produced, in order
+# to force version.cmake to always be re-run before the build
+add_custom_command(
+	OUTPUT ${CMAKE_BINARY_DIR}/version.cpp
+	${CMAKE_BINARY_DIR}/_version.cpp
+	COMMAND ${CMAKE_COMMAND} -P
+	${CMAKE_SOURCE_DIR}/cmake/version.cmake
+)	
+add_custom_target(version_info DEPENDS ${CMAKE_BINARY_DIR}/version.cpp)
+
 if(BUILD_PYTHON)
 	add_subdirectory(python)
 endif()
@@ -48,28 +79,3 @@ endif()
 if(BUILD_LIB)
 	add_subdirectory(lib)
 endif()
-
-# Add __FILENAME__ with short path
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
-
-# This uses the lmfit lib
-
-find_library(LMFIT_LIB lmfit)
-find_path(LMFIT_INCLUDE lmmin.h)
-message(STATUS "Found lmmin.h : ${LMFIT_INCLUDE}")
-message(STATUS "Found lmfit library: ${LMFIT_LIB}")
-add_library(lmfit STATIC IMPORTED)
-set_target_properties(lmfit PROPERTIES
-	IMPORTED_LOCATION "${LMFIT_LIB}")
-
-# Add a custom command that produces version.cpp, plus
-# a dummy output that's not actually produced, in order
-# to force version.cmake to always be re-run before the build
-add_custom_command(
-	OUTPUT ${CMAKE_BINARY_DIR}/version.cpp
-	${CMAKE_BINARY_DIR}/_version.cpp
-	COMMAND ${CMAKE_COMMAND} -P
-	${CMAKE_SOURCE_DIR}/cmake/version.cmake
-)	
-add_custom_target(version_info DEPENDS ${CMAKE_BINARY_DIR}/version.cpp)
