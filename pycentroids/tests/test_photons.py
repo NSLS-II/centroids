@@ -59,10 +59,10 @@ def test_find_photons(dataframe, gauss):
     photon = gauss(box, cen_x, cen_y, 500, sigma)
     data = dataframe((1, 1400, 1200), bgnd, 5)
 
-    data[0, y-box:y+box+1, x-box:x+box+1] += photon
+    data[0, y - box:y + box + 1, x - box:x + box + 1] += photon
     data = data.astype(np.uint16)
 
-    int_photon = data[0, y-box:y+box+1, x-box:x+box+1]
+    int_photon = data[0, y - box:y + box + 1, x - box:x + box + 1]
     photon_sorted = np.sort(int_photon.ravel())[::-1]
     photon_bgnd = photon_sorted[pixel_bgnd:].mean()
     photon_int = (photon_sorted[:pixel_photon] - photon_bgnd).sum()
