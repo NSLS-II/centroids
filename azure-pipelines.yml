@@ -31,7 +31,7 @@ jobs:
         displayName: Run lint tests
       - script: |
             cmake --version
-            git clone --depth=1 https://jugit.fz-juelich.de/mlz/lmfit.git
+            git clone --depth=1 https://github.com/NSLS-II/lmfit.git
             cd lmfit
             mkdir lmfit_build
             cd lmfit_build
@@ -67,7 +67,7 @@ jobs:
           displayName: Install Deps
         - script: |
             cmake --version
-            git clone --depth=1 https://jugit.fz-juelich.de/mlz/lmfit.git
+            git clone --depth=1 https://github.com/NSLS-II/lmfit.git
             cd lmfit
             mkdir lmfit_build
             cd lmfit_build
