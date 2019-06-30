@@ -41,7 +41,6 @@ jobs:
                 ..
             make
             sudo make install
-            ls -l /usr/lib
         displayName: Build lmfit
       - bash: |
             source activate testenv
