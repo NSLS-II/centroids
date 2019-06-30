@@ -3,16 +3,11 @@ import re
 import sys
 import platform
 import subprocess
+import versioneer
 
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
-
-pipe = subprocess.Popen('git describe --tags --always',
-                        stdout=subprocess.PIPE, shell=True)
-git = pipe.stdout.read().decode("utf-8").rstrip()
-git_release = git.lstrip('v')
-git_version = '.'.join(git_release.split('-')[0:2])
 
 cpus = os.cpu_count()
 
@@ -37,8 +32,8 @@ class CMakeBuild(build_ext):
             out = subprocess.check_output(['cmake', '--version'])
         except OSError:
             raise RuntimeError("CMake must be installed to build the following"
-                               "extensions: " +
-                               ", ".join(e.name for e in self.extensions))
+                               "extensions: , ".join(
+                                   e.name for e in self.extensions))
 
         if platform.system() == "Windows":
             cmake_version = LooseVersion(
@@ -84,6 +79,9 @@ class CMakeBuild(build_ext):
                               cwd=self.build_temp)
 
 
+cmdclass = versioneer.get_cmdclass()
+cmdclass['build_ext'] = CMakeBuild
+
 setup(
     name='pycentroids',
     author='Stuart B. Wilkins',
@@ -98,7 +96,7 @@ setup(
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
     ext_modules=[CMakeExtension('_pycentroids')],
-    cmdclass=dict(build_ext=CMakeBuild),
+    cmdclass=cmdclass,
     zip_safe=False,
-    version=git_version
+    version=versioneer.get_version(),
 )
