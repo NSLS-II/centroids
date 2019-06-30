@@ -121,6 +121,7 @@ jobs:
             cd builddir
             cmake -DBUILD_DOCS=ON -DCPPLINT_CHECK=OFF \
                   -DBUILD_PYTHON=OFF \
+                  -DBUILD_LIB=OFF \
                   -DDOXYGEN_EXECUTABLE=/tmp/doxygen/bin/doxygen \
                   ..
             make docs
