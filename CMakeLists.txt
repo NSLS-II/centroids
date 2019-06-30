@@ -1,11 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
-project(centroids VERSION 0.1)
+project(centroids VERSION 0.1.7)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 set(CMAKE_CXX_STANDARD 14)
-
-find_package(OpenMP)
-message(STATUS "OpenMP Status ${OpenMP_FOUND}")
 
 include(PreventInSourceBuilds)
 
@@ -39,22 +36,6 @@ endif()
 # Add __FILENAME__ with short path
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
-
-# This uses the lmfit lib
-
-find_library(LMFIT_LIB lmfit)
-find_path(LMFIT_INCLUDE lmmin.h)
-message(STATUS "System : ${CMAKE_SYSTEM_NAME}")
-message(STATUS "Found lmmin.h : ${LMFIT_INCLUDE}")
-message(STATUS "Found lmfit library: ${LMFIT_LIB}")
-add_library(lmfit STATIC IMPORTED)
-set_target_properties(lmfit PROPERTIES
-	IMPORTED_LOCATION "${LMFIT_LIB}")
-
-# # Fix for not looking in /usr/local
-# if(CMAKE_SYSTEM_NAME STREQUAL Darwin)
-# 	set(CMAKE_REQUIRED_INCLUDES "/usr/local/include")
-# endif()
 
 # Add a custom command that produces version.cpp, plus
 # a dummy output that's not actually produced, in order
