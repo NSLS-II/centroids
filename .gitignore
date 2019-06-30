@@ -9,6 +9,8 @@ docs/doxygen/xml
 docs/doxygen/html
 docs/doxygen/latex
 *.h5
+cmake-build
+
 #
 # Byte-compiled / optimized / DLL files
 __pycache__/
