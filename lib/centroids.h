@@ -44,7 +44,6 @@ extern const char* CENTROIDS_GIT_REV;
 extern const char* CENTROIDS_GIT_BRANCH;
 extern const char* CENTROIDS_GIT_VERSION;
 
-#define CENTROIDS_CENT_PIXEL                  0x8000
 #define CENTROIDS_TABLE_COLS                  9
 #define CENTROIDS_FIT_PARAMS_MAX              5
 #define CENTROIDS_FIT_PARAMS_2D_N             5
