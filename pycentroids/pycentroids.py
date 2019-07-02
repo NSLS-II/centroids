@@ -2,11 +2,11 @@ import pandas as pd
 from _pycentroids import find_photons as _find_photons
 
 
-def find_photons(images, threshold=200, box=2, search_box=1, pixel_photon=10,
-                 pixel_bgnd=15, overlap_max=0, sum_min=800, sum_max=1250,
-                 fit_pixels_2d=True, fit_pixels_1d_x=True,
-                 fit_pixels_1d_y=True,
-                 return_pixels='none', return_map=False):
+def find_photons(images, threshold=200, box=2, search_box=1, pixel_photon=9,
+                 pixel_bgnd=15, com_photon=9, overlap_max=0, sum_min=800,
+                 sum_max=1250, fit_pixels_2d=True, fit_pixels_1d_x=True,
+                 fit_pixels_1d_y=True, return_pixels='none',
+                 return_map=False):
     """Find photons in CCD images and process for sub-pixel center.
 
     Parameters
@@ -32,6 +32,10 @@ def find_photons(images, threshold=200, box=2, search_box=1, pixel_photon=10,
         Number of pixels to include for background determination. After sorting
         from high to low values the values from pixel_background to the end of
         the array are averaged to get the background value.
+    com_photon : int
+        Number of pixels to include for COM calculation. After sorting
+        from high to low values the first com_photon values are used
+        to determine the photons COM.
     overlap_max : int
         The maximum overlap to accept before rejecting the photon
         from the table.
@@ -39,6 +43,14 @@ def find_photons(images, threshold=200, box=2, search_box=1, pixel_photon=10,
         The minimum integrated intensity to filter the output table.
     sum_max : float
         The maximum integrated intensity to filter the output table.
+    fit_pixels_2d : bool
+        If true, fit the pixels from a photon with a 2D gaussian
+    fit_pixels_1dx : bool
+        If true, fit the pixels from a photon with a 1D gaussian integrating
+        along the y-axis to get the x position
+    fit_pixels_1dy : bool
+        If true, fit the pixels from a photon with a 1D gaussian integrating
+        along the x-axis to get the y position
     return_pixels : 'none', 'sorted', 'unsorted'
         Option to return array of pixel values
     return_map : bool
@@ -58,7 +70,7 @@ def find_photons(images, threshold=200, box=2, search_box=1, pixel_photon=10,
     _rtn = _find_photons(images=images, threshold=threshold, box=box,
                          search_box=search_box,
                          pixel_photon=pixel_photon, pixel_bgnd=pixel_bgnd,
-                         overlap_max=overlap_max,
+                         com_photon=com_photon, overlap_max=overlap_max,
                          sum_min=sum_min, sum_max=sum_max,
                          fit_pixels_2d=fit_pixels_2d,
                          fit_pixels_1dx=fit_pixels_1d_x,

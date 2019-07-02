@@ -160,6 +160,7 @@ void centroids_initialize_params(centroid_params<DT, OT> *params) {
     params->search_box_t = 9;
 
     params->pixel_photon_num = 9;
+    params->com_photon_num = 9;
     params->pixel_bgnd_num = 10;
     params->overlap_max = 0;
     params->sum_min = 0;
@@ -198,6 +199,11 @@ int centroids_calculate_params(centroid_params<DT, OT> *params) {
 
     if ((params->pixel_bgnd_num <= 0)
         || (params->pixel_bgnd_num >= params->box_t)) {
+        return CENTROIDS_PARAMS_BAD;
+    }
+
+    if ((params->com_photon_num <= 0)
+        || (params->com_photon_num >= params->box_t)) {
         return CENTROIDS_PARAMS_BAD;
     }
 
@@ -659,7 +665,7 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
         // -----------------------------------------------------------
 
         centroids_calculate_com<OT>(pixel_cluster, xvals, yvals,
-                &comx, &comy, params.box_t);
+                &comx, &comy, params.com_photon_num);
         DEBUG_PRINT("COM = %lf, %lf (%lf, %lf)\n",
                 (double)comx, (double)comy,
                 (double)xvals[0], (double)yvals[0]);

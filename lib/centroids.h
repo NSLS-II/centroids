@@ -96,6 +96,7 @@ struct centroid_params {
     int search_box_n;
     int pixel_photon_num;
     int pixel_bgnd_num;
+    int com_photon_num;
     int overlap_max;
     double sum_min;
     double sum_max;

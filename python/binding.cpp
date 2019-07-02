@@ -103,7 +103,7 @@ py::object omp_info(void) {
 
 py::tuple find_photons(py::array_t<uint16_t> images,
                        uint16_t threshold, int box, int search_box,
-                       int pixel_photon, int pixel_bgnd,
+                       int pixel_photon, int pixel_bgnd, int com_photon,
                        int overlap_max, double sum_min, double sum_max,
                        bool fit_pixels_2d,
                        bool fit_pixels_1d_x, bool fit_pixels_1d_y,
@@ -128,6 +128,7 @@ py::tuple find_photons(py::array_t<uint16_t> images,
     params.box = box;
     params.search_box = search_box;
     params.pixel_photon_num = pixel_photon;
+    params.com_photon_num = com_photon;
     params.pixel_bgnd_num = pixel_bgnd;
     params.overlap_max = overlap_max;
     params.sum_min = sum_min;
@@ -247,6 +248,7 @@ PYBIND11_MODULE(_pycentroids, m) {
            py::arg("search_box"),
            py::arg("pixel_photon"),
            py::arg("pixel_bgnd"),
+           py::arg("com_photon"),
            py::arg("overlap_max"),
            py::arg("sum_min"),
            py::arg("sum_max"),
