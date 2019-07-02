@@ -2,16 +2,11 @@ import pandas as pd
 from _pycentroids import find_photons as _find_photons
 
 
-def find_photons(images, threshold=200, box=2, pixel_photon=10, pixel_bgnd=15,
-                 overlap_max=0, sum_min=800, sum_max=1250,
+def find_photons(images, threshold=200, box=2, search_box=1, pixel_photon=10,
+                 pixel_bgnd=15, overlap_max=0, sum_min=800, sum_max=1250,
+                 fit_pixels_2d=True, fit_pixels_1d_x=True,
+                 fit_pixels_1d_y=True,
                  return_pixels='none', return_map=False):
-    _rtn = _find_photons(images=images, threshold=threshold, box=box,
-                         pixel_photon=pixel_photon, pixel_bgnd=pixel_bgnd,
-                         overlap_max=overlap_max,
-                         sum_min=sum_min, sum_max=sum_max,
-                         fit_pixels_2d=False,
-                         fit_pixels_1dx=False, fit_pixels_1dy=False,
-                         return_pixels=return_pixels, return_map=return_map)
     """Find photons in CCD images and process for sub-pixel center.
 
     Parameters
@@ -21,8 +16,14 @@ def find_photons(images, threshold=200, box=2, pixel_photon=10, pixel_bgnd=15,
     threshold : int
         Pixel value threshold for first search of images
     box : int
+        Value for pixel box, Box size is
+        (2 * box + 1) * (2 * box + 1)
+    search_box : int
         Value for pixel seaarch box, Box size is
         (2 * box + 1) * (2 * box + 1)
+        This value defines the box which is used to ensure that the
+        center pixel is the highest. This should be set to the size of
+        the charge cloud from the photon event.
     pixel_photon : int
         Number of pixels to include for photon intensity. After sorting
         from high to low values the first pixel_photon values are summed
@@ -53,6 +54,16 @@ def find_photons(images, threshold=200, box=2, pixel_photon=10, pixel_bgnd=15,
         Pixel values from located photons
 
     """
+
+    _rtn = _find_photons(images=images, threshold=threshold, box=box,
+                         search_box=search_box,
+                         pixel_photon=pixel_photon, pixel_bgnd=pixel_bgnd,
+                         overlap_max=overlap_max,
+                         sum_min=sum_min, sum_max=sum_max,
+                         fit_pixels_2d=fit_pixels_2d,
+                         fit_pixels_1dx=fit_pixels_1d_x,
+                         fit_pixels_1dy=fit_pixels_1d_y,
+                         return_pixels=return_pixels, return_map=return_map)
 
     df = pd.DataFrame(_rtn[0], columns=_rtn[1])
 

@@ -102,11 +102,11 @@ py::object omp_info(void) {
 }
 
 py::tuple find_photons(py::array_t<uint16_t> images,
-                       uint16_t threshold, int box,
+                       uint16_t threshold, int box, int search_box,
                        int pixel_photon, int pixel_bgnd,
                        int overlap_max, double sum_min, double sum_max,
                        bool fit_pixels_2d,
-                       bool fit_pixels_1dx, bool fit_pixels_1dy,
+                       bool fit_pixels_1d_x, bool fit_pixels_1d_y,
                        const std::string &return_pixels, bool return_map) {
     py::list out_list;
 
@@ -126,14 +126,21 @@ py::tuple find_photons(py::array_t<uint16_t> images,
 
     params.threshold = threshold;
     params.box = box;
-    params.search_box = 1;
+    params.search_box = search_box;
     params.pixel_photon_num = pixel_photon;
     params.pixel_bgnd_num = pixel_bgnd;
     params.overlap_max = overlap_max;
     params.sum_min = sum_min;
     params.sum_max = sum_max;
-    params.fit_pixels = CENTROIDS_FIT_2D | CENTROIDS_FIT_1D_X
-        | CENTROIDS_FIT_1D_Y;
+    if (fit_pixels_2d) {
+        params.fit_pixels |= CENTROIDS_FIT_2D;
+    }
+    if (fit_pixels_1d_x) {
+        params.fit_pixels |= CENTROIDS_FIT_1D_X;
+    }
+    if (fit_pixels_1d_y) {
+        params.fit_pixels |= CENTROIDS_FIT_1D_Y;
+    }
     params.x = images_buffer.shape[2];
     params.y = images_buffer.shape[1];
     params.n = images_buffer.shape[0];
@@ -239,6 +246,7 @@ PYBIND11_MODULE(_pycentroids, m) {
            py::arg("images"),
            py::arg("threshold"),
            py::arg("box"),
+           py::arg("search_box"),
            py::arg("pixel_photon"),
            py::arg("pixel_bgnd"),
            py::arg("overlap_max"),
