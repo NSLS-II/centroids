@@ -68,19 +68,33 @@
 const char *centroids_photon_table_names[] = {
     "Pixel X", "Pixel Y",
     "COM X", "COM Y", "COR COM X", "COR COM Y",
-    "Int", "Bgnd", "Overlap",
+    "Int", "Bgnd", "Overlap"
+};
+
+const char *centroids_photon_table_names_fit2d[] = {
     "Fit X", "Fit Y", "Fit Bgnd", "Fit Amp", "Fit Sigma",
     "Fit Err X", "Fit Err Y", "Fit Err Bgnd", "Fit Err Amp", "Fit Err Sigma",
     "Fit Fnorm", "Fit Outcome", "Fit StdErr"
 };
 
+const char *centroids_photon_table_names_fit1dx[] = {
+    "Fit 1DX X", "Fit 1DX Bgnd", "Fit 1DX Amp", "Fit 1DX Sigma",
+    "Fit 1DX Err X", "Fit 1DX Err Bgnd", "Fit 1DX Err Amp", "Fit 1DX Err Sigma",
+    "Fit 1DX Fnorm", "Fit 1DX Outcome", "Fit 1DX StdErr"
+};
+
+const char *centroids_photon_table_names_fit1dy[] = {
+    "Fit 1DY Y", "Fit 1DY Bgnd", "Fit 1DY Amp", "Fit 1DY Sigma",
+    "Fit 1DY Err Y", "Fit 1DY Err Bgnd", "Fit 1DY Err Amp", "Fit 1DY Err Sigma",
+    "Fit 1DY Fnorm", "Fit 1DY Outcome", "Fit 1DY StdErr"
+};
 
 template <typename OT>
 struct fit_data_struct {
-    OT *x;
-    OT *y;
-    OT *z;
-    OT (*f)(OT x, OT y, const double *p );
+    OT *measured;
+    OT x;
+    OT y;
+    int box;
 };
 
 /* -------------------------------------------------------------------------*/
@@ -150,8 +164,10 @@ template <typename DT>
 void centroids_bubble_sort(DT *vals, DT *x, DT *y, const int n);
 
 template <typename OT>
-OT centroids_std_error_estimate(OT *pixels, OT *xvals, OT *yvals,
-        double *fit_params, const int N);
+OT centroids_std_error_estimate_2d(OT *pixels, double *fit_params, const int N);
+
+template <typename OT>
+OT centroids_std_error_estimate_1d(OT *pixels, double *fit_params, const int N);
 
 template <typename OT>
 OT centroids_2dgauss_int(OT x, OT y, const double *p);

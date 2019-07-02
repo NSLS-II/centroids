@@ -48,11 +48,11 @@ def test_null(dataframe):
 def test_find_photons(dataframe, gauss):
     x = 17
     y = 20
-    cen_x = 0.2
+    cen_x = 0.4
     cen_y = 0.15
     sigma = 0.46
     bgnd = 150
-    box = 2
+    box = 3
     pixel_photon = 9
     pixel_bgnd = 12
 
@@ -70,7 +70,7 @@ def test_find_photons(dataframe, gauss):
 
     table, grid, photons = find_photons(data.astype(np.uint16),
                                         threshold=250, box=box,
-                                        sum_min=800, sum_max=1200,
+                                        sum_min=800, sum_max=1400,
                                         pixel_photon=pixel_photon,
                                         pixel_bgnd=pixel_bgnd)
 
