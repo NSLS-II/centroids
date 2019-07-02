@@ -39,6 +39,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include <vector>
 #include <memory>
 
@@ -386,6 +389,15 @@ size_t centroids_process(DT *image, uint16_t *out,
         DEBUG_COMMENT("Failed to calculate LUT\n");
         return 0;
     }
+
+#ifdef _OPENMP
+    // Output openmp info
+    DEBUG_PRINT("omp_get_num_procs() = %d\n", omp_get_num_procs());
+    DEBUG_PRINT("omp_get_max_threads() = %d\n", omp_get_max_threads());
+    DEBUG_PRINT("omp_get_thread_limit() = %d\n", omp_get_thread_limit());
+#else
+    DEBUG_COMMENT("No openmp support\n");
+#endif
 
     #pragma omp parallel shared(n_photons)
     {
