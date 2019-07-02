@@ -110,5 +110,3 @@ def test_find_photons(dataframe, gauss):
     assert pytest.approx(table['Fit 1DY Y'][0], 0.01) == y + cen_y
     assert pytest.approx(table['Fit 1DX Sigma'][0], 0.05) == sigma
     assert pytest.approx(table['Fit 1DY Sigma'][0], 0.05) == sigma
-
-    assert False  # For testing!
