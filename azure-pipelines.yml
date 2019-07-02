@@ -44,6 +44,7 @@ jobs:
         displayName: Build lmfit
       - bash: |
             source activate testenv
+            export CENTROIDS_DEBUG_OUTPUT=1
             python setup.py install
         displayName: Install using setup.py
       - script: |
