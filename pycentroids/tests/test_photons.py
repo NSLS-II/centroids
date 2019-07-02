@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from scipy.special import erf
-# from numpy.testing import assert_array_equal, assert_array_almost_equal
+from numpy.testing import assert_array_equal  # assert_array_almost_equal
 from pycentroids import find_photons
 
 
@@ -46,6 +46,8 @@ def test_null(dataframe):
 
 
 def test_find_photons(dataframe, gauss):
+    image_x = 1400
+    image_y = 1200
     x = 17
     y = 20
     cen_x = 0.4
@@ -57,7 +59,7 @@ def test_find_photons(dataframe, gauss):
     pixel_bgnd = 12
 
     photon = gauss(box, cen_x, cen_y, 500, sigma)
-    data = dataframe((1, 1400, 1200), bgnd, 5)
+    data = dataframe((1, image_x, image_y), bgnd, 5)
 
     data[0, y - box:y + box + 1, x - box:x + box + 1] += photon
     data = data.astype(np.uint16)
@@ -73,9 +75,28 @@ def test_find_photons(dataframe, gauss):
                                         search_box=box,
                                         sum_min=800, sum_max=1400,
                                         pixel_photon=pixel_photon,
-                                        pixel_bgnd=pixel_bgnd)
+                                        pixel_bgnd=pixel_bgnd,
+                                        return_map=True,
+                                        return_pixels='unsorted')
 
     assert len(table) == 1
+    assert photons.shape == (1, 2 * box + 1, 2 * box + 1)
+    assert grid.shape == (1, image_x, image_y)
+
+    # Check returned photons
+    assert_array_equal(photons[0],
+                       data[0, y - box:y + box + 1, x - box:x + box + 1])
+
+    # Check photon mask
+    mask = np.zeros_like(grid)
+    mask[0, 0:box, :] = 1
+    mask[0, -box:, :] = 1
+    mask[0, :, 0:box] = 1
+    mask[0, :, -box:] = 1
+    mask[0, y - box:y + box + 1, x - box:x + box + 1] = 1
+    assert_array_equal(mask, grid)
+
+    # Check pixel values and fit
     assert table['Pixel X'][0] == x
     assert table['Pixel Y'][0] == y
     assert pytest.approx(table['Fit X'][0], 0.01) == x + cen_x
