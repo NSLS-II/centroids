@@ -97,7 +97,6 @@ int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> *lut,
     for (size_t n = 0; n < lut->n_points; n++) {
         OT x = start + n * lut->step;
         lut->data[n] = x;
-        DEBUG_PRINT("LUT %12zu = %lf\n", n, (double)lut->data[n]);
     }
 
     return CENTROIDS_LUT_OK;
@@ -818,12 +817,9 @@ size_t centroids_find_photons(DT *image, uint16_t *out,
                     // Mark the image for duplicates
 
                     // Mark the center pixel using the bitwise value
-                    // CENTROIDS_CENT_PIXEL
                     // Increment 1 for each surrounding area
 
                     DEBUG_PRINT("Pixel above threshold (%ld, %ld)\n", i, j);
-                    *out_p |= CENTROIDS_CENT_PIXEL;
-
 
                     // Now set the pointers for dealing with the box
                     uint16_t *_out_p = out_p;
