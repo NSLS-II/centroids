@@ -58,12 +58,27 @@ std::vector<std::string> get_column_names(
             &centroids_photon_table_names[0],
             &centroids_photon_table_names[CENTROIDS_TABLE_COLS]);
 
-    if (params.fit_pixels != CENTROIDS_FIT_NONE) {
+    if (params.fit_pixels & CENTROIDS_FIT_2D) {
         names.insert(names.end(),
-                &centroids_photon_table_names[CENTROIDS_TABLE_COLS],
-                &centroids_photon_table_names
-                    [CENTROIDS_TABLE_COLS
-                     + (2 * CENTROIDS_FIT_PARAMS_N)
+                &centroids_photon_table_names_fit2d[0],
+                &centroids_photon_table_names_fit2d
+                    [(2 * CENTROIDS_FIT_PARAMS_2D_N)
+                     + CENTROIDS_FIT_EXTRA_N]);
+    }
+
+    if (params.fit_pixels & CENTROIDS_FIT_1D_X) {
+        names.insert(names.end(),
+                &centroids_photon_table_names_fit1dx[0],
+                &centroids_photon_table_names_fit1dx
+                    [(2 * CENTROIDS_FIT_PARAMS_1D_N)
+                     + CENTROIDS_FIT_EXTRA_N]);
+    }
+
+    if (params.fit_pixels & CENTROIDS_FIT_1D_Y) {
+        names.insert(names.end(),
+                &centroids_photon_table_names_fit1dy[0],
+                &centroids_photon_table_names_fit1dy
+                    [(2 * CENTROIDS_FIT_PARAMS_1D_N)
                      + CENTROIDS_FIT_EXTRA_N]);
     }
 
@@ -87,9 +102,11 @@ py::object omp_info(void) {
 }
 
 py::tuple find_photons(py::array_t<uint16_t> images,
-                       uint16_t threshold, int box,
-                       int pixel_photon, int pixel_bgnd,
+                       uint16_t threshold, int box, int search_box,
+                       int pixel_photon, int pixel_bgnd, int com_photon,
                        int overlap_max, double sum_min, double sum_max,
+                       bool fit_pixels_2d,
+                       bool fit_pixels_1d_x, bool fit_pixels_1d_y,
                        const std::string &return_pixels, bool return_map) {
     py::list out_list;
 
@@ -109,12 +126,22 @@ py::tuple find_photons(py::array_t<uint16_t> images,
 
     params.threshold = threshold;
     params.box = box;
+    params.search_box = search_box;
     params.pixel_photon_num = pixel_photon;
+    params.com_photon_num = com_photon;
     params.pixel_bgnd_num = pixel_bgnd;
     params.overlap_max = overlap_max;
     params.sum_min = sum_min;
     params.sum_max = sum_max;
-    params.fit_pixels = CENTROIDS_FIT_LMMIN;
+    if (fit_pixels_2d) {
+        params.fit_pixels |= CENTROIDS_FIT_2D;
+    }
+    if (fit_pixels_1d_x) {
+        params.fit_pixels |= CENTROIDS_FIT_1D_X;
+    }
+    if (fit_pixels_1d_y) {
+        params.fit_pixels |= CENTROIDS_FIT_1D_Y;
+    }
     params.x = images_buffer.shape[2];
     params.y = images_buffer.shape[1];
     params.n = images_buffer.shape[0];
@@ -158,12 +185,20 @@ py::tuple find_photons(py::array_t<uint16_t> images,
 
     size_t photon_table_cols = CENTROIDS_TABLE_COLS;
 
-    if (params.fit_pixels != CENTROIDS_FIT_NONE) {
-        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_N;
+    if (params.fit_pixels & CENTROIDS_FIT_2D) {
+        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_2D_N;
         photon_table_cols += CENTROIDS_FIT_EXTRA_N;
     }
 
-    fprintf(stderr, "Finished centroids_process\n");
+    if (params.fit_pixels & CENTROIDS_FIT_1D_X) {
+        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_1D_N;
+        photon_table_cols += CENTROIDS_FIT_EXTRA_N;
+    }
+
+    if (params.fit_pixels & CENTROIDS_FIT_1D_Y) {
+        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_1D_N;
+        photon_table_cols += CENTROIDS_FIT_EXTRA_N;
+    }
 
     // The following is some jiggery-pokery so we dont
     // have to copy the vector....
@@ -190,7 +225,7 @@ py::tuple find_photons(py::array_t<uint16_t> images,
         auto pixels_capsule = py::capsule(pixels, [](void *(pixels))
                 { delete reinterpret_cast<std::vector<uint16_t>*>((pixels)); });
         auto pixels_array = py::array({static_cast<int>(nphotons),
-                static_cast<int>(params.box_t)},
+                static_cast<int>(params.box_n), static_cast<int>(params.box_n)},
                 pixels->data(), pixels_capsule);
 
         out_list.append(pixels_array);
@@ -210,11 +245,16 @@ PYBIND11_MODULE(_pycentroids, m) {
            py::arg("images"),
            py::arg("threshold"),
            py::arg("box"),
+           py::arg("search_box"),
            py::arg("pixel_photon"),
            py::arg("pixel_bgnd"),
+           py::arg("com_photon"),
            py::arg("overlap_max"),
            py::arg("sum_min"),
            py::arg("sum_max"),
+           py::arg("fit_pixels_2d"),
+           py::arg("fit_pixels_1dx"),
+           py::arg("fit_pixels_1dy"),
            py::arg("return_pixels"),
            py::arg("return_map"));
 

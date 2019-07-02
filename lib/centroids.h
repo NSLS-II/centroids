@@ -44,9 +44,10 @@ extern const char* CENTROIDS_GIT_REV;
 extern const char* CENTROIDS_GIT_BRANCH;
 extern const char* CENTROIDS_GIT_VERSION;
 
-#define CENTROIDS_CENT_PIXEL                  0x8000
 #define CENTROIDS_TABLE_COLS                  9
-#define CENTROIDS_FIT_PARAMS_N                5
+#define CENTROIDS_FIT_PARAMS_MAX              5
+#define CENTROIDS_FIT_PARAMS_2D_N             5
+#define CENTROIDS_FIT_PARAMS_1D_N             4
 #define CENTROIDS_FIT_EXTRA_N                 3
 
 enum {
@@ -68,10 +69,15 @@ enum {
 
 enum {
     CENTROIDS_FIT_NONE = 0,
-    CENTROIDS_FIT_LMMIN = 1
+    CENTROIDS_FIT_2D = 1,
+    CENTROIDS_FIT_1D_X = 2,
+    CENTROIDS_FIT_1D_Y = 4
 };
 
 extern const char *centroids_photon_table_names[];
+extern const char *centroids_photon_table_names_fit2d[];
+extern const char *centroids_photon_table_names_fit1dx[];
+extern const char *centroids_photon_table_names_fit1dy[];
 
 /* -------------------------------------------------------------------------*/
 /**
@@ -85,8 +91,12 @@ struct centroid_params {
     int box;
     int box_t;
     int box_n;
+    int search_box;
+    int search_box_t;
+    int search_box_n;
     int pixel_photon_num;
     int pixel_bgnd_num;
+    int com_photon_num;
     int overlap_max;
     double sum_min;
     double sum_max;

@@ -10,7 +10,6 @@ from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
 
 cpus = os.cpu_count()
-
 here = os.path.abspath(os.path.dirname(__file__))
 
 with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
@@ -18,6 +17,10 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 
 with open(os.path.join(here, 'requirements.txt')) as f:
     requirements = f.read().split()
+
+# Do hack to understand if debug is set
+_debug = os.environ.get('CENTROIDS_DEBUG_OUTPUT', None)
+print(_debug)
 
 
 class CMakeExtension(Extension):
@@ -61,9 +64,10 @@ class CMakeBuild(build_ext):
             build_args += ['--', '/m']
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
-            cmake_args += ['-DDEBUG_OUTPUT=OFF']
             cmake_args += ['-DBUILD_DOCS=OFF']
             cmake_args += ['-DBUILD_LIB=OFF']
+            if _debug is not None:
+                cmake_args += ['-DDEBUG_OUTPUT=ON']
             build_args += ['--target', '_pycentroids']
             build_args += ['--', '-j{}'.format(cpus)]
 
