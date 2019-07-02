@@ -199,8 +199,6 @@ py::tuple find_photons(py::array_t<uint16_t> images,
         photon_table_cols += CENTROIDS_FIT_EXTRA_N;
     }
 
-    fprintf(stderr, "Finished centroids_process\n");
-
     // The following is some jiggery-pokery so we dont
     // have to copy the vector....
     auto capsule = py::capsule(photon_table, [](void *(photon_table))
