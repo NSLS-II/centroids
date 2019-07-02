@@ -590,12 +590,18 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
             continue;
         }
 
-        // Bubble sort values
+        // -----------------------------
+        // Bubble sort pixel intensities
+        // -----------------------------
+
         centroids_bubble_sort<OT>(pixel_cluster.get(),
                 xvals.get(), yvals.get(),
                 params.box_t);
 
-        // Now we process background
+        // -----------------
+        // Process backgound
+        // -----------------
+
         bgnd = 0;
         for (int n = params.pixel_bgnd_num; n < params.box_t; n++) {
             bgnd += pixel_cluster[n];
@@ -605,12 +611,14 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
         DEBUG_PRINT("bgnd = %lf (%d)\n",
                 (double)bgnd, params.pixel_photon_num);
 
-        // Subtract Background
         for (int n = 0; n < params.box_t; n++) {
             pixel_cluster[n] -= bgnd;
         }
 
-        // Now process sum
+        // --------------------------------
+        // Process integral (sum) of pixels
+        // --------------------------------
+
         sum = 0;
         for (int n = 0; n < params.pixel_photon_num; n++) {
             sum += pixel_cluster[n];
@@ -646,8 +654,8 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
                 (double)xvals[0], (double)yvals[0]);
 
         // Correct COM using LUT for pixels
-        centroids_lookup_pixel_lut<OT>(pixel_lut, comx, &ccomx);
-        centroids_lookup_pixel_lut<OT>(pixel_lut, comy, &ccomy);
+        centroids_lookup_pixel_lut<OT>(pixel_lut, comx - xvals[0], &ccomx);
+        centroids_lookup_pixel_lut<OT>(pixel_lut, comy - yvals[0], &ccomy);
 
         // Insert result into photon table
         photon_table->insert(photon_table->end(),
@@ -726,6 +734,10 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
             centroids_fit_photon<DT, OT>(fit_params, &fit_data_1d,
                     photon_table, false, params, CENTROIDS_FIT_PARAMS_1D_N);
         }
+
+        // --------------------------
+        // Store pixel cluster values
+        // --------------------------
 
         if (params.return_pixels == CENTROIDS_STORE_SORTED) {
             photons->insert(photons->end(),
