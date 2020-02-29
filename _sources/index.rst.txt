@@ -10,6 +10,7 @@ Welcome to centroids's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   theory
    api
 
 
