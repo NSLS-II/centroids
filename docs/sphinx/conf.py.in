@@ -78,6 +78,8 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
 
+# Set the format for today
+today_fmt = '%B, %d %Y at %H:%M'
 
 # -- Options for HTML output -------------------------------------------------
 

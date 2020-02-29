@@ -13,10 +13,10 @@ Welcome to centroids's documentation!
    theory
    api
 
+.. Indices and tables
+   ==================
+   * :ref:`genindex`
+   * :ref:`modindex`
+   * :ref:`search`
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+Documentation build on: |today|
