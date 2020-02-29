@@ -131,3 +131,4 @@ doc/source/_as_gen/*
 
 #
 doc/source/_as_gen
+.vscode/settings.json
