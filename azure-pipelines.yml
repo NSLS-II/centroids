@@ -130,6 +130,7 @@ jobs:
             make docs
           displayName: Build Docs using CMake
         - script: |
+            set -x
             mkdir ~/.ssh && mv $DOWNLOADSECUREFILE_SECUREFILEPATH ~/.ssh/id_rsa
             chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_rsa
             ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
