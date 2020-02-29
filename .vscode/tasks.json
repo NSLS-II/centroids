@@ -44,7 +44,22 @@
                 "docs"
             ],
             "dependsOn": [
-                "cmake"
+                "cmake",
+                "python"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "python",
+            "type": "shell",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "command": "python",
+            "args": [
+                "setup.py",
+                "install"
             ],
             "problemMatcher": []
         },
