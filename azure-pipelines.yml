@@ -133,7 +133,8 @@ jobs:
             mkdir ~/.ssh && mv $DOWNLOADSECUREFILE_SECUREFILEPATH ~/.ssh/id_rsa
             chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_rsa
             ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
-            sudo gh-pages --repo=git@github.com:NSLS-II/centroids.git --dotfiles=true --dist builddir/docs/build
+            sudo chmod 777 /usr/local/lib/node_modules/gh-pages/.cache
+            gh-pages --repo=git@github.com:NSLS-II/centroids.git --dotfiles=true --dist builddir/docs/build
           displayName: Publish to GitHub Pages
           condition: |
               not(eq(variables['Build.Reason'], 'PullRequest'))
