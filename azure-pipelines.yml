@@ -101,8 +101,7 @@ jobs:
               architecture: 'x64'
         - script: |
             python -m pip install sphinx sphinx-bootstrap-theme breathe
-            pwd
-            npm install gh-pages
+            npm install --prefix=${HOME} gh-pages
             sudo apt-get install flex bison cmake graphviz
             git config user.email "ci-build@bnl.gov"
             git config user.name "ci-build"
@@ -136,7 +135,7 @@ jobs:
             ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
             # sudo mkdir /usr/local/lib/node_modules/gh-pages/.cache
             # sudo chmod 777 /usr/local/lib/node_modules/gh-pages/.cache
-            ~/node_modules/.bin/gh-pages --repo=git@github.com:NSLS-II/centroids.git --dotfiles=true --dist builddir/docs/build
+            ${HOME}/node_modules/.bin/gh-pages --repo=git@github.com:NSLS-II/centroids.git --dotfiles=true --dist builddir/docs/build
           displayName: Publish to GitHub Pages
           condition: |
               not(eq(variables['Build.Reason'], 'PullRequest'))
