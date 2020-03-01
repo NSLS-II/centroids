@@ -76,6 +76,22 @@
             "dependsOn": [
                 "make"
             ]
+        },
+        {
+            "label": "view docs",
+            "type": "shell",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "command": "google-chrome",
+            "args": [
+                "${workspaceRoot}/build/docs/build/index.html"
+            ],
+            "dependsOn": [
+                "make"
+            ],
+            "problemMatcher": []
         }
     ]
 }
