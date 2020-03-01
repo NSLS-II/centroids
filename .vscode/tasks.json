@@ -89,7 +89,7 @@
                 "${workspaceRoot}/build/docs/build/index.html"
             ],
             "dependsOn": [
-                "make"
+                "make docs"
             ],
             "problemMatcher": []
         }
