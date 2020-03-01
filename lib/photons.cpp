@@ -615,9 +615,9 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
                 xvals.get(), yvals.get(),
                 params.box_t);
 
-        // -----------------
-        // Process backgound
-        // -----------------
+        // ------------------
+        // Process background
+        // ------------------
 
         bgnd = 0;
         for (int n = params.pixel_bgnd_num; n < params.box_t; n++) {
