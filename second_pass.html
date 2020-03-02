@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Second Pass Through Photons &#8212; centroids v0.1.8-17-gb452875 documentation</title>
+    <title>Second Pass Through Photons &#8212; centroids v0.1.8-18-g57c3404 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
@@ -12,6 +12,7 @@
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Centroids API" href="api.html" />
@@ -38,7 +39,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           centroids</a>
-        <span class="navbar-text navbar-version pull-left"><b>v0.1.8-17</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>v0.1.8-18</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -133,48 +134,100 @@
       
   <div class="section" id="second-pass-through-photons">
 <h1>Second Pass Through Photons<a class="headerlink" href="#second-pass-through-photons" title="Permalink to this headline">¶</a></h1>
-<p>Second pass through image</p>
-<div class="graphviz"><img src="_images/graphviz-33efaa4199e61a77b6cdf9f596239e069a21a4b4.png" alt="digraph second_pass {
-label=&quot;Initial Pass Through Image&quot;
+<p>Once potential photon events have been located, the centroiding algorithm
+processes the list of potential events. If an event is determined to be a
+photon, then the resultant parameters are calculated and added to a list of
+detected photons. The flow of this algorithm is shown in
+<a class="reference internal" href="#second-pass-digraph"><span class="std std-ref">this flowchart</span></a>.</p>
+<p>The algorithm starts by assessing what the potential photon’s overlap with
+other events is. This is done using the overlap image calculated in the
+firstpass. Here if the sum of the <span class="math notranslate nohighlight">\(n \times n\)</span> cluster is calculated.
+If the sum is equal to the cluster size, then the photon event is isolated.
+If the value is greater than that of the cluster size, then the photon event
+overlaps another event. If this value is greater than the value specified in
+the parameters (<code class="xref cpp cpp-var docutils literal notranslate"><span class="pre">overlap_max</span></code>), then the event is rejected.</p>
+<p>Next, the pixel intensities in the <span class="math notranslate nohighlight">\(n \times n\)</span> box are sorted, highest
+first via a <a class="reference external" href="https://en.wikipedia.org/wiki/Bubble_sort">bubble sort</a> . The
+background value is calculated by averaging the last
+<code class="xref cpp cpp-var docutils literal notranslate"><span class="pre">pixel_photon_bgnd</span></code> values in the sorted list. The integrated
+intensity of the photon is then calculated by summing up the first
+<code class="xref cpp cpp-var docutils literal notranslate"><span class="pre">pixel_photon_num</span></code> values is the sorted list after subtracting the
+average background value just calculated. The photon event is then filtered
+using the integrated intensity by the <code class="xref cpp cpp-var docutils literal notranslate"><span class="pre">sum_min</span></code> and
+<code class="xref cpp cpp-var docutils literal notranslate"><span class="pre">sum_max</span></code>.</p>
+<p>After calculating the integrated intensity, the <em>center of mass</em> of the
+photon event is calculated using the equations:</p>
+<div class="math notranslate nohighlight">
+\[C_x = \frac{\sum_i I_i x_i}{\sum_i I_i}
+\quad\text{and}\quad
+C_y = \frac{\sum_i I_i y_i}{\sum_i I_i}\]</div>
+<p>where <span class="math notranslate nohighlight">\(I_x\)</span> and <span class="math notranslate nohighlight">\(I_y\)</span> are the intensity of the background
+corrected pixel intensities, <span class="math notranslate nohighlight">\(x\)</span> and <span class="math notranslate nohighlight">\(y\)</span> are the fractional
+pixel coordinates and the sum index <span class="math notranslate nohighlight">\(i\)</span> is over all the pixels in the
+cluster.</p>
+<p>The pixel cluster is then fitted using a least squares algorithm in both 2D
+and 1D. The pixel cluster is fitted to the <em>error function</em> being the
+integral of a <em>gaussian function</em>. In 2D this function is:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\DeclareMathOperator\erf{erf}\\I = B + I_0 \left(
+\erf \frac{\left( x - \frac{1}{2} - x_0 \right)}{\sqrt{2} \sigma} -
+\erf \frac{\left( x + \frac{1}{2} - x_0 \right)}{\sqrt{2} \sigma}
+\right)\cdot\left(
+\erf \frac{\left( y - \frac{1}{2} - y_0 \right)}{\sqrt{2} \sigma} -
+\erf \frac{\left( y + \frac{1}{2} - y_0 \right)}{\sqrt{2} \sigma}
+\right)\end{aligned}\end{align} \]</div>
+<p>With the 1D version being:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\DeclareMathOperator\erf{erf}\\I = B + I_0 \left(
+\erf \frac{\left( x - \frac{1}{2} - x_0 \right)}{\sqrt{2} \sigma} -
+\erf \frac{\left( x + \frac{1}{2} - x_0 \right)}{\sqrt{2} \sigma}
+\right)\end{aligned}\end{align} \]</div>
+<p>where <span class="math notranslate nohighlight">\(I\)</span> is the intensity at pixel <span class="math notranslate nohighlight">\(x\)</span> (or <span class="math notranslate nohighlight">\(x,y\)</span> in 2D),
+<span class="math notranslate nohighlight">\(B\)</span> is the background and <span class="math notranslate nohighlight">\(x_0\)</span> and <span class="math notranslate nohighlight">\(y_0\)</span> are the center
+coordinates of the gaussian.</p>
+<p>The results of the fit are stored in the output table of photon parameters.</p>
+<div class="figure align-default" id="id1">
+<span id="second-pass-digraph"></span><div class="graphviz"><img src="_images/graphviz-de96212482487173ed3b70b5697a2690d4238f53.png" alt="digraph second_pass {
+ node[shape=&quot;box&quot;, style=rounded]
+    start; end;
+ node[shape=&quot;diamond&quot;, style=&quot;&quot;]
+    is_last_event[label=&quot;is the last event?&quot;]
+    is_overlap_ok[label=&quot;is the event overlapping\nmore than specified?&quot;]
+    is_int_ok[label=&quot;is the integral\nwithin bounds?&quot;]
+ node[shape=&quot;parallelogram&quot;, style=&quot;&quot;]
+    calc_overlap[label=&quot;calculate overlap&quot;]
+    sort_pixels[label=&quot;sort pixels by intensity\nin event nxn box&quot;]
+    calc_bgnd[label=&quot;calculate background&quot;]
+    calc_int[label=&quot;calculate integral&quot;]
+    calc_com[label=&quot;calculate com&quot;]
+    calc_2d[label=&quot;calculate 2D fit&quot;]
+    calc_1d[label=&quot;calculate 1D fits&quot;]
+    store[label=&quot;store values in photon table&quot;]
+ node[shape=&quot;box&quot;, style=&quot;&quot;]
+    set_start_event[label=&quot;move to first event in list&quot;]
+    move_to_next_event[label=&quot;move to next event&quot;]
 
-node[shape=&quot;box&quot;, style=rounded]
-   start; end;
-node[shape=&quot;diamond&quot;, style=&quot;&quot;]
-   is_last_event[label=&quot;is the last event?&quot;]
-   is_overlap_ok[label=&quot;is the event overlapping\nmore than specified?&quot;]
-   is_int_ok[label=&quot;is the integral\nwithin bounds?&quot;]
-node[shape=&quot;parallelogram&quot;, style=&quot;&quot;]
-   calc_overlap[label=&quot;calculate overlap&quot;]
-   sort_pixels[label=&quot;sort pixels by intensity\nin event nxn box&quot;]
-   calc_bgnd[label=&quot;calculate background&quot;]
-   calc_int[label=&quot;calculate integral&quot;]
-   calc_com[label=&quot;calculate com&quot;]
-   calc_2d[label=&quot;calculate 2D fit&quot;]
-   calc_1d[label=&quot;calculate 1D fits&quot;]
-   store[label=&quot;store values in photon table&quot;]
-node[shape=&quot;box&quot;, style=&quot;&quot;]
-   set_start_event[label=&quot;move to first event in list&quot;]
-   move_to_next_event[label=&quot;move to next event&quot;]
+ start -&gt; set_start_event
+ set_start_event -&gt; calc_overlap
+ calc_overlap -&gt; is_overlap_ok
+ is_overlap_ok -&gt; is_last_event[label=&quot;&gt; overlap_max&quot;]
+ is_overlap_ok -&gt; sort_pixels[label=&quot;&lt; overlap_max&quot;]
+ sort_pixels -&gt; calc_bgnd
+ calc_bgnd -&gt; calc_int
+ calc_int -&gt; is_int_ok
+ is_int_ok -&gt; is_last_event[label=&quot;out of bounds&quot;]
+ is_int_ok -&gt; calc_com[label=&quot;sum_min &lt; int &lt; sum_max&quot;]
+ calc_com -&gt; calc_2d
+ calc_2d -&gt; calc_1d
+ calc_1d -&gt; store
+ store -&gt; is_last_event
 
-start -&gt; set_start_event
-set_start_event -&gt; calc_overlap
-calc_overlap -&gt; is_overlap_ok
-is_overlap_ok -&gt; is_last_event[label=&quot;&gt; overlap_max&quot;]
-is_overlap_ok -&gt; sort_pixels[label=&quot;&lt; overlap_max&quot;]
-sort_pixels -&gt; calc_bgnd
-calc_bgnd -&gt; calc_int
-calc_int -&gt; is_int_ok
-is_int_ok -&gt; is_last_event[label=&quot;out of bounds&quot;]
-is_int_ok -&gt; calc_com[label=&quot;sum_min &lt; int &lt; sum_max&quot;]
-calc_com -&gt; calc_2d
-calc_2d -&gt; calc_1d
-calc_1d -&gt; store
-store -&gt; is_last_event
-
-is_last_event -&gt; end[label=&quot;yes&quot;]
-is_last_event -&gt; move_to_next_event[label=&quot;no&quot;]
-move_to_next_event -&gt; calc_overlap
+ is_last_event -&gt; end[label=&quot;yes&quot;]
+ is_last_event -&gt; move_to_next_event[label=&quot;no&quot;]
+ move_to_next_event -&gt; calc_overlap
 }" class="graphviz" /></div>
+<p class="caption"><span class="caption-text">Second pass through events found in first pass</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
 </div>
 
 
