@@ -31,19 +31,6 @@ jobs:
             source activate testenv
             flake8 .
         displayName: Run lint tests
-#      - script: |
-#            cmake --version
-#            git clone --depth=1 https://github.com/NSLS-II/lmfit.git
-#            cd lmfit
-#            mkdir lmfit_build
-#            cd lmfit_build
-#            cmake -DBUILD_SHARED_LIBS=ON \
-#                -DCMAKE_POSITION_INDEPENDENT_CODE=YES \
-#                -DCMAKE_INSTALL_PREFIX=/usr \
-#                ..
-#            make
-#            sudo make install
-#        displayName: Build lmfit
       - bash: |
             source activate testenv
             export CENTROIDS_DEBUG_OUTPUT=1
@@ -67,19 +54,6 @@ jobs:
             sudo apt-get install cmake
             python -m pip install cpplint
           displayName: Install Deps
-#        - script: |
-#            cmake --version
-#            git clone --depth=1 https://github.com/NSLS-II/lmfit.git
-#            cd lmfit
-#            mkdir lmfit_build
-#            cd lmfit_build
-#            cmake -DBUILD_SHARED_LIBS=ON \
-#            -DCMAKE_POSITION_INDEPENDENT_CODE=YES \
-#            -DCMAKE_INSTALL_PREFIX=/usr \
-#            ..
-#            make
-#            sudo make install
-#          displayName: Build and Install lmfit
         - script: |
             mkdir build
             cd build
