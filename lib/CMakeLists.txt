@@ -5,7 +5,9 @@ set(SOURCE_FILES
 	${CMAKE_SOURCE_DIR}/lmfit/lmmin.c
 	${CMAKE_BINARY_DIR}/version.cpp
 )
-set(PUBLIC_INCLUDE_FILES centroids.h)
+set(PUBLIC_INCLUDE_FILES
+	centroids.h
+)
 set(PRIVATE_INCLUDE_FILES
 	photons.h
 	${CMAKE_SOURCE_DIR}/lmfit/lmmin.h
