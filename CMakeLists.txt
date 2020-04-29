@@ -48,6 +48,8 @@ add_custom_command(
 )	
 add_custom_target(version_info DEPENDS ${CMAKE_BINARY_DIR}/version.cpp)
 
+add_subdirectory(lmfit)
+
 if(BUILD_PYTHON)
 	add_subdirectory(python)
 endif()
