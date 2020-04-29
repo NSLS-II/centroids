@@ -36,9 +36,6 @@ target_include_directories(centroids PUBLIC
 
 add_dependencies(centroids version_info)
 
-# find_package(lmfit REQUIRED)
-# target_link_libraries(centroids PRIVATE lmfit_local)
-
 find_package(OpenMP)
 if(OpenMP_FOUND)
 	target_link_libraries(centroids PUBLIC OpenMP::OpenMP_CXX)
