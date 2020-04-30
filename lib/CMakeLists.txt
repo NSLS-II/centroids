@@ -3,6 +3,7 @@ set(centroids_LIBRARY centroids PARENT_SCOPE)
 set(SOURCE_FILES
 	photons.cpp
 	${CMAKE_SOURCE_DIR}/lmfit/lmmin.c
+	${CMAKE_SOURCE_DIR}/lmfit/lminvert.c
 	${CMAKE_BINARY_DIR}/version.cpp
 )
 set(PUBLIC_INCLUDE_FILES

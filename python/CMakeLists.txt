@@ -6,6 +6,7 @@ pybind11_add_module(_pycentroids EXCLUDE_FROM_ALL
 	binding.cpp
 	${CMAKE_SOURCE_DIR}/lib/photons.cpp
 	${CMAKE_SOURCE_DIR}/lmfit/lmmin.c
+	${CMAKE_SOURCE_DIR}/lmfit/lminvert.c
 	${CMAKE_BINARY_DIR}/version.cpp
 )
 
