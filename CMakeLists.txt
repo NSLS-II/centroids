@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(centroids VERSION 0.1.7)
+project(centroids VERSION 0.1.9)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 set(CMAKE_CXX_STANDARD 14)
@@ -45,7 +45,7 @@ add_custom_command(
 	${CMAKE_BINARY_DIR}/_version.cpp
 	COMMAND ${CMAKE_COMMAND} -P
 	${CMAKE_SOURCE_DIR}/cmake/version.cmake
-)	
+)
 add_custom_target(version_info DEPENDS ${CMAKE_BINARY_DIR}/version.cpp)
 
 if(BUILD_PYTHON)

@@ -1,13 +1,27 @@
 include(GNUInstallDirs)
 set(centroids_LIBRARY centroids PARENT_SCOPE)
-set(SOURCE_FILES photons.cpp ${CMAKE_BINARY_DIR}/version.cpp)
-set(PUBLIC_INCLUDE_FILES centroids.h)
-set(PRIVATE_INCLUDE_FILES photons.h)
+set(SOURCE_FILES
+	photons.cpp
+	${CMAKE_SOURCE_DIR}/lmfit/lmmin.c
+	${CMAKE_SOURCE_DIR}/lmfit/lminvert.c
+	${CMAKE_BINARY_DIR}/version.cpp
+)
+set(PUBLIC_INCLUDE_FILES
+	centroids.h
+)
+set(PRIVATE_INCLUDE_FILES
+	photons.h
+	${CMAKE_SOURCE_DIR}/lmfit/lmmin.h
+	${CMAKE_SOURCE_DIR}/lmfit/lmstruct.h
+	${CMAKE_SOURCE_DIR}/lmfit/lminvert.h
+)
 
 set_property(SOURCE ${CMAKE_BINARY_DIR}/version.cpp PROPERTY GENERATED 1)
 
-add_library(centroids SHARED ${SOURCE_FILES} 
-	${PUBLIC_INCLUDE_FILES} ${PRIVATE_INCLUDE_FILES})
+add_library(centroids SHARED
+	${SOURCE_FILES}
+	${PUBLIC_INCLUDE_FILES}
+	${PRIVATE_INCLUDE_FILES})
 
 set_target_properties(
     centroids PROPERTIES
@@ -20,13 +34,11 @@ set_target_properties(
 
 target_include_directories(centroids PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/lmfit>
 	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 add_dependencies(centroids version_info)
-
-find_package(lmfit REQUIRED)
-target_link_libraries(centroids PUBLIC lmfit::lmfit)
 
 find_package(OpenMP)
 if(OpenMP_FOUND)
@@ -42,7 +54,7 @@ if (LIB_INSTALL)
 	include(CMakePackageConfigHelpers)
 
     install(
-        TARGETS centroids 
+        TARGETS centroids
 		EXPORT centroids-targets
 		LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 		PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
@@ -61,7 +73,7 @@ if (LIB_INSTALL)
 		"${CMAKE_CURRENT_BINARY_DIR}/centroids-config.cmake"
 		INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/centroids"
 	)
-	
+
 	write_basic_package_version_file(
 		"${CMAKE_CURRENT_BINARY_DIR}/centroids-config-version.cmake"
 		VERSION ${centroids_VERSION}
