@@ -18,13 +18,29 @@ set(PRIVATE_INCLUDE_FILES
 
 set_property(SOURCE ${CMAKE_BINARY_DIR}/version.cpp PROPERTY GENERATED 1)
 
-add_library(centroids SHARED
+add_library(centroids_obj OBJECT
 	${SOURCE_FILES}
 	${PUBLIC_INCLUDE_FILES}
 	${PRIVATE_INCLUDE_FILES})
 
+target_include_directories(centroids_obj PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/lmfit>
+	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+add_dependencies(centroids_obj version_info)
+
+set_property(TARGET centroids_obj PROPERTY POSITION_INDEPENDENT_CODE 1)
+
+add_library(centroids_shared SHARED
+	$<TARGET_OBJECTS:centroids_obj>)
+
+add_library(centroids_static STATIC
+	$<TARGET_OBJECTS:centroids_obj>)
+
 set_target_properties(
-    centroids PROPERTIES
+    centroids_shared PROPERTIES
     OUTPUT_NAME centroids
     VERSION ${centroids_VERSION}
 	SOVERSION ${centroids_VERSION_MAJOR}
@@ -32,21 +48,18 @@ set_target_properties(
 	PRIVATE_HEADER "${PRIVATE_HEADER_FILES}"
 )
 
-target_include_directories(centroids PUBLIC
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/lmfit>
-	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+set_target_properties(
+    centroids_static PROPERTIES
+    OUTPUT_NAME centroids
 )
-
-add_dependencies(centroids version_info)
 
 find_package(OpenMP)
 if(OpenMP_FOUND)
-	target_link_libraries(centroids PUBLIC OpenMP::OpenMP_CXX)
+	target_link_libraries(centroids_obj PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 if(CPPLINT_CHECK)
-	add_dependencies(centroids ${CPPLINT_TARGET})
+	add_dependencies(centroids_obj ${CPPLINT_TARGET})
 	message(STATUS "Checking CXX Code via cpplint")
 endif()
 
@@ -54,7 +67,7 @@ if (LIB_INSTALL)
 	include(CMakePackageConfigHelpers)
 
     install(
-        TARGETS centroids
+        TARGETS centroids_shared
 		EXPORT centroids-targets
 		LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 		PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
