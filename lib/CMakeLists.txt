@@ -1,4 +1,3 @@
-include(GNUInstallDirs)
 set(centroids_LIBRARY centroids PARENT_SCOPE)
 set(SOURCE_FILES
 	photons.cpp
@@ -64,39 +63,46 @@ if(CPPLINT_CHECK)
 	message(STATUS "Checking CXX Code via cpplint")
 endif()
 
-if (LIB_INSTALL)
-	include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
-    install(
-        TARGETS centroids_shared
-		EXPORT centroids-targets
-		LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-		PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-        COMPONENT Libraries
-	)
+install(
+    TARGETS centroids_shared
+	EXPORT centroids-targets
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+	COMPONENT Libraries
+)
 
-	install(
-		EXPORT centroids-targets
-		FILE centroids-targets.cmake
-		NAMESPACE centroids::
-		DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/centroids"
-	)
+install(
+    TARGETS centroids_static
+	EXPORT centroids-targets
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+    COMPONENT Libraries
+)
 
-	configure_package_config_file(
-		"${CMAKE_CURRENT_SOURCE_DIR}/centroids-config.cmake.in"
-		"${CMAKE_CURRENT_BINARY_DIR}/centroids-config.cmake"
-		INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/centroids"
-	)
+install(
+	EXPORT centroids-targets
+	FILE centroids-targets.cmake
+	NAMESPACE centroids::
+	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/centroids"
+)
 
-	write_basic_package_version_file(
-		"${CMAKE_CURRENT_BINARY_DIR}/centroids-config-version.cmake"
-		VERSION ${centroids_VERSION}
-		COMPATIBILITY AnyNewerVersion
-	)
+configure_package_config_file(
+	"${CMAKE_CURRENT_SOURCE_DIR}/centroids-config.cmake.in"
+	"${CMAKE_CURRENT_BINARY_DIR}/centroids-config.cmake"
+	INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/centroids"
+)
 
-	install(
-		FILES "${CMAKE_CURRENT_BINARY_DIR}/centroids-config.cmake"
-		"${CMAKE_CURRENT_BINARY_DIR}/centroids-config-version.cmake"
-		DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/centroids"
-	)
-endif()
+write_basic_package_version_file(
+	"${CMAKE_CURRENT_BINARY_DIR}/centroids-config-version.cmake"
+	VERSION ${centroids_VERSION}
+	COMPATIBILITY AnyNewerVersion
+)
+
+install(
+	FILES "${CMAKE_CURRENT_BINARY_DIR}/centroids-config.cmake"
+	"${CMAKE_CURRENT_BINARY_DIR}/centroids-config-version.cmake"
+	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/centroids"
+)
