@@ -14,6 +14,7 @@ option(BUILD_DOCS "Build documentation" ON)
 option(CPPLINT_CHECK "Check CXX Source for Formatting" ON)
 option(BUILD_PYTHON "Build Python Bindings using pybind11" ON)
 option(BUILD_LIB "Build Library" ON)
+option(BUILD_WITH_OPENMP "Build With OpenMP" ON)
 
 if(CPPLINT_CHECK)
 	include(cpplint)

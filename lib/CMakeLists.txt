@@ -52,10 +52,11 @@ set_target_properties(
     centroids_static PROPERTIES
     OUTPUT_NAME centroids
 )
-
-find_package(OpenMP)
-if(OpenMP_FOUND)
-	target_link_libraries(centroids_obj PUBLIC OpenMP::OpenMP_CXX)
+if(BUILD_WITH_OPENMP)
+	find_package(OpenMP)
+	if(OpenMP_FOUND)
+		target_link_libraries(centroids_obj PUBLIC OpenMP::OpenMP_CXX)
+	endif()
 endif()
 
 if(CPPLINT_CHECK)
