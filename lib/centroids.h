@@ -105,8 +105,9 @@ struct centroid_params {
     size_t y;
     size_t n;
     int return_pixels;
-    bool return_map;
+    int return_map;
     int fit_pixels;
+    int tag_pixels;
     lm_control_struct control;
 };
 

@@ -169,6 +169,7 @@ void centroids_initialize_params(centroid_params<DT, OT> *params) {
     params->return_pixels = CENTROIDS_STORE_NONE;
     params->return_map = false;
     params->fit_pixels = 0;
+    params->tag_pixels = 0;
 
     params->control = lm_control_double;
     params->control.verbosity = 0;
@@ -765,6 +766,15 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
             }
         }
 
+        // -----------------------------------------
+        // Tag the photons that are found in the box
+        // -----------------------------------------
+
+        if (params.tag_pixels) {
+            for (int m = 0; m < params.box_t; m++) {
+                *(photon[m].out) |=  0x8000;
+            }
+        }
         n_photons++;
     }
 
