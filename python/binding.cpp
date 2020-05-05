@@ -107,7 +107,8 @@ py::tuple find_photons(py::array_t<uint16_t> images,
                        int overlap_max, double sum_min, double sum_max,
                        bool fit_pixels_2d,
                        bool fit_pixels_1d_x, bool fit_pixels_1d_y,
-                       const std::string &return_pixels, bool return_map) {
+                       const std::string &return_pixels, bool return_map,
+                       bool tag_pixels) {
     py::list out_list;
 
     py::buffer_info images_buffer = images.request();
@@ -146,6 +147,7 @@ py::tuple find_photons(py::array_t<uint16_t> images,
     params.y = images_buffer.shape[1];
     params.n = images_buffer.shape[0];
     params.return_map = return_map;
+    params.tag_pixels = tag_pixels;
 
     if (!return_pixels.compare("sorted")) {
         params.return_pixels = CENTROIDS_STORE_SORTED;
@@ -256,7 +258,8 @@ PYBIND11_MODULE(_pycentroids, m) {
            py::arg("fit_pixels_1dx"),
            py::arg("fit_pixels_1dy"),
            py::arg("return_pixels"),
-           py::arg("return_map"));
+           py::arg("return_map"),
+           py::arg("tag_pixels"));
 
      m.def("omp_info", &omp_info,
              "Return OpenMP info");
