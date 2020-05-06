@@ -185,22 +185,7 @@ py::tuple find_photons(py::array_t<uint16_t> images,
 
     pybind11::gil_scoped_acquire acquire;
 
-    size_t photon_table_cols = CENTROIDS_TABLE_COLS;
-
-    if (params.fit_pixels & CENTROIDS_FIT_2D) {
-        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_2D_N;
-        photon_table_cols += CENTROIDS_FIT_EXTRA_N;
-    }
-
-    if (params.fit_pixels & CENTROIDS_FIT_1D_X) {
-        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_1D_N;
-        photon_table_cols += CENTROIDS_FIT_EXTRA_N;
-    }
-
-    if (params.fit_pixels & CENTROIDS_FIT_1D_Y) {
-        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_1D_N;
-        photon_table_cols += CENTROIDS_FIT_EXTRA_N;
-    }
+    size_t photon_table_cols = centroids_calculate_table_cols(params);
 
     // The following is some jiggery-pokery so we dont
     // have to copy the vector....

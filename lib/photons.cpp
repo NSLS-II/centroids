@@ -213,6 +213,38 @@ int centroids_calculate_params(centroid_params<DT, OT> *params) {
 
 /* -------------------------------------------------------------------------*/
 /**
+ * \brief Calculate number of photon table cols based on parameters
+ *
+ * @tparam DT Type for input data to centroids
+ * param params Parameters structure
+ *
+ * Returns number of columns in photon table
+ */
+/* -------------------------------------------------------------------------*/
+template <typename DT, typename OT>
+size_t centroids_calculate_table_cols(centroid_params<DT, OT> params) {
+    size_t photon_table_cols = CENTROIDS_TABLE_COLS;
+
+    if (params.fit_pixels & CENTROIDS_FIT_2D) {
+        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_2D_N;
+        photon_table_cols += CENTROIDS_FIT_EXTRA_N;
+    }
+
+    if (params.fit_pixels & CENTROIDS_FIT_1D_X) {
+        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_1D_N;
+        photon_table_cols += CENTROIDS_FIT_EXTRA_N;
+    }
+
+    if (params.fit_pixels & CENTROIDS_FIT_1D_Y) {
+        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_1D_N;
+        photon_table_cols += CENTROIDS_FIT_EXTRA_N;
+    }
+
+    return photon_table_cols;
+}
+
+/* -------------------------------------------------------------------------*/
+/**
  * \brief Swap the values of two variables
  *
  * @tparam DT

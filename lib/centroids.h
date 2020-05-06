@@ -120,6 +120,9 @@ void centroids_initialize_params(centroid_params<DT, OT> *params);
 template <typename DT, typename OT>
 int centroids_calculate_params(centroid_params<DT, OT> *params);
 
+template <typename DT, typename OT>
+size_t centroids_calculate_table_cols(centroid_params<DT, OT> params);
+
 template<typename DT, typename OT>
 size_t centroids_process(DT *image, uint16_t *out,
                          PhotonTable<OT> *photon_table,
