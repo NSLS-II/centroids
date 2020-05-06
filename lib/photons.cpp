@@ -170,10 +170,6 @@ void centroids_initialize_params(centroid_params<DT, OT> *params) {
     params->return_map = false;
     params->fit_pixels = 0;
     params->tag_pixels = 0;
-
-    params->control = lm_control_double;
-    params->control.verbosity = 0;
-    params->control.patience = 1000;
 }
 
 /* -------------------------------------------------------------------------*/
@@ -536,17 +532,20 @@ void centroids_fit_photon(double *fit_params,
         const bool fit_2d,
         const centroid_params<DT, OT> &params, int n_params) {
     lm_status_struct fit_status;
+    lm_control_struct control = lm_control_double;
+    control.verbosity = 0;
+    control.patience = 1000;
     double fit_params_err[CENTROIDS_FIT_PARAMS_MAX];
 
     if (fit_2d) {
         lmmin2(n_params, fit_params, fit_params_err,
                 NULL, params.box_t, NULL, (const void*) fit_data,
-                centroids_evaluate_2dgauss<OT>, &params.control,
+                centroids_evaluate_2dgauss<OT>, &control,
                 &fit_status);
     } else {
         lmmin2(n_params, fit_params, fit_params_err,
                 NULL, params.box_t, NULL, (const void*) fit_data,
-                centroids_evaluate_1dgauss<OT>, &params.control,
+                centroids_evaluate_1dgauss<OT>, &control,
                 &fit_status);
     }
 

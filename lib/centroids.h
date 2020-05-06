@@ -37,7 +37,6 @@
 #ifndef LIB_CENTROIDS_H_
 #define LIB_CENTROIDS_H_
 
-#include <lmmin.h>
 #include <vector>
 
 extern const char* CENTROIDS_GIT_REV;
@@ -108,7 +107,6 @@ struct centroid_params {
     int return_map;
     int fit_pixels;
     int tag_pixels;
-    lm_control_struct control;
 };
 
 template <typename DT>
