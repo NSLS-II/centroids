@@ -218,8 +218,8 @@ int centroids_calculate_params(centroid_params<DT, OT> *params) {
  */
 /* -------------------------------------------------------------------------*/
 template <typename DT, typename OT>
-size_t centroids_calculate_table_cols(centroid_params<DT, OT> params) {
-    size_t photon_table_cols = CENTROIDS_TABLE_COLS;
+int centroids_calculate_table_cols(const centroid_params<DT, OT> &params) {
+    int photon_table_cols = CENTROIDS_TABLE_COLS;
 
     if (params.fit_pixels & CENTROIDS_FIT_2D) {
         photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_2D_N;
@@ -931,6 +931,8 @@ template void centroids_initialize_params<uint16_t, double>(
         centroid_params<uint16_t, double> *params);
 template int centroids_calculate_params<uint16_t, double>(
         centroid_params<uint16_t, double> *params);
+template int centroids_calculate_table_cols<uint16_t, double>(
+        const centroid_params<uint16_t, double> &params);
 template size_t centroids_process<uint16_t, double>(
         uint16_t *image, uint16_t *out, PhotonTable<double> *photon_table,
         std::vector<uint16_t> *photons,
@@ -940,6 +942,8 @@ template void centroids_initialize_params<uint16_t, float>(
         centroid_params<uint16_t, float> *params);
 template int centroids_calculate_params<uint16_t, float>(
         centroid_params<uint16_t, float> *params);
+template int centroids_calculate_table_cols<uint16_t, float>(
+        const centroid_params<uint16_t, float> &params);
 template size_t centroids_process<uint16_t, float>(
         uint16_t *image, uint16_t *out, PhotonTable<float> *photon_table,
         std::vector<uint16_t> *photons,

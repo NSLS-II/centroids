@@ -164,7 +164,7 @@ py::tuple find_photons(py::array_t<uint16_t> images,
     }
 
 
-    if (centroids_calculate_params<uint16_t>(&params)
+    if (centroids_calculate_params<uint16_t, double>(&params)
             != CENTROIDS_PARAMS_OK) {
         throw std::invalid_argument("Invalid parameter combination");
     }
@@ -185,7 +185,8 @@ py::tuple find_photons(py::array_t<uint16_t> images,
 
     pybind11::gil_scoped_acquire acquire;
 
-    size_t photon_table_cols = centroids_calculate_table_cols(params);
+    size_t photon_table_cols =
+        centroids_calculate_table_cols<uint16_t, double>(params);
 
     // The following is some jiggery-pokery so we dont
     // have to copy the vector....

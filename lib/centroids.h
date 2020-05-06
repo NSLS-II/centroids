@@ -119,11 +119,13 @@ template <typename DT, typename OT>
 int centroids_calculate_params(centroid_params<DT, OT> *params);
 
 template <typename DT, typename OT>
-size_t centroids_calculate_table_cols(centroid_params<DT, OT> params);
+int centroids_calculate_table_cols(const centroid_params<DT, OT> &params);
 
 template<typename DT, typename OT>
 size_t centroids_process(DT *image, uint16_t *out,
                          PhotonTable<OT> *photon_table,
                          std::vector<DT> *photons,
-                         const centroid_params<DT, OT> &params);
+                         const centroid_params<DT, OT>
+                         &params);
+
 #endif  // LIB_CENTROIDS_H_
