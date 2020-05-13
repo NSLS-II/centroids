@@ -37,7 +37,6 @@
 #ifndef LIB_CENTROIDS_H_
 #define LIB_CENTROIDS_H_
 
-#include <lmmin.h>
 #include <vector>
 
 extern const char* CENTROIDS_GIT_REV;
@@ -105,9 +104,9 @@ struct centroid_params {
     size_t y;
     size_t n;
     int return_pixels;
-    bool return_map;
+    int return_map;
     int fit_pixels;
-    lm_control_struct control;
+    int tag_pixels;
 };
 
 template <typename DT>
@@ -119,9 +118,14 @@ void centroids_initialize_params(centroid_params<DT, OT> *params);
 template <typename DT, typename OT>
 int centroids_calculate_params(centroid_params<DT, OT> *params);
 
+template <typename DT, typename OT>
+int centroids_calculate_table_cols(const centroid_params<DT, OT> &params);
+
 template<typename DT, typename OT>
 size_t centroids_process(DT *image, uint16_t *out,
                          PhotonTable<OT> *photon_table,
                          std::vector<DT> *photons,
-                         const centroid_params<DT, OT> &params);
+                         const centroid_params<DT, OT>
+                         &params);
+
 #endif  // LIB_CENTROIDS_H_

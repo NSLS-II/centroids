@@ -169,10 +169,7 @@ void centroids_initialize_params(centroid_params<DT, OT> *params) {
     params->return_pixels = CENTROIDS_STORE_NONE;
     params->return_map = false;
     params->fit_pixels = 0;
-
-    params->control = lm_control_double;
-    params->control.verbosity = 0;
-    params->control.patience = 1000;
+    params->tag_pixels = 0;
 }
 
 /* -------------------------------------------------------------------------*/
@@ -208,6 +205,38 @@ int centroids_calculate_params(centroid_params<DT, OT> *params) {
     }
 
     return CENTROIDS_PARAMS_OK;
+}
+
+/* -------------------------------------------------------------------------*/
+/**
+ * \brief Calculate number of photon table cols based on parameters
+ *
+ * @tparam DT Type for input data to centroids
+ * param params Parameters structure
+ *
+ * Returns number of columns in photon table
+ */
+/* -------------------------------------------------------------------------*/
+template <typename DT, typename OT>
+int centroids_calculate_table_cols(const centroid_params<DT, OT> &params) {
+    int photon_table_cols = CENTROIDS_TABLE_COLS;
+
+    if (params.fit_pixels & CENTROIDS_FIT_2D) {
+        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_2D_N;
+        photon_table_cols += CENTROIDS_FIT_EXTRA_N;
+    }
+
+    if (params.fit_pixels & CENTROIDS_FIT_1D_X) {
+        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_1D_N;
+        photon_table_cols += CENTROIDS_FIT_EXTRA_N;
+    }
+
+    if (params.fit_pixels & CENTROIDS_FIT_1D_Y) {
+        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_1D_N;
+        photon_table_cols += CENTROIDS_FIT_EXTRA_N;
+    }
+
+    return photon_table_cols;
 }
 
 /* -------------------------------------------------------------------------*/
@@ -503,17 +532,20 @@ void centroids_fit_photon(double *fit_params,
         const bool fit_2d,
         const centroid_params<DT, OT> &params, int n_params) {
     lm_status_struct fit_status;
+    lm_control_struct control = lm_control_double;
+    control.verbosity = 0;
+    control.patience = 1000;
     double fit_params_err[CENTROIDS_FIT_PARAMS_MAX];
 
     if (fit_2d) {
         lmmin2(n_params, fit_params, fit_params_err,
                 NULL, params.box_t, NULL, (const void*) fit_data,
-                centroids_evaluate_2dgauss<OT>, &params.control,
+                centroids_evaluate_2dgauss<OT>, &control,
                 &fit_status);
     } else {
         lmmin2(n_params, fit_params, fit_params_err,
                 NULL, params.box_t, NULL, (const void*) fit_data,
-                centroids_evaluate_1dgauss<OT>, &params.control,
+                centroids_evaluate_1dgauss<OT>, &control,
                 &fit_status);
     }
 
@@ -765,6 +797,15 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
             }
         }
 
+        // -----------------------------------------
+        // Tag the photons that are found in the box
+        // -----------------------------------------
+
+        if (params.tag_pixels) {
+            for (int m = 0; m < params.box_t; m++) {
+                *(photon[m].out) |=  0x8000;
+            }
+        }
         n_photons++;
     }
 
@@ -890,6 +931,8 @@ template void centroids_initialize_params<uint16_t, double>(
         centroid_params<uint16_t, double> *params);
 template int centroids_calculate_params<uint16_t, double>(
         centroid_params<uint16_t, double> *params);
+template int centroids_calculate_table_cols<uint16_t, double>(
+        const centroid_params<uint16_t, double> &params);
 template size_t centroids_process<uint16_t, double>(
         uint16_t *image, uint16_t *out, PhotonTable<double> *photon_table,
         std::vector<uint16_t> *photons,
@@ -899,6 +942,8 @@ template void centroids_initialize_params<uint16_t, float>(
         centroid_params<uint16_t, float> *params);
 template int centroids_calculate_params<uint16_t, float>(
         centroid_params<uint16_t, float> *params);
+template int centroids_calculate_table_cols<uint16_t, float>(
+        const centroid_params<uint16_t, float> &params);
 template size_t centroids_process<uint16_t, float>(
         uint16_t *image, uint16_t *out, PhotonTable<float> *photon_table,
         std::vector<uint16_t> *photons,

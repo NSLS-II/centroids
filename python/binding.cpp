@@ -107,7 +107,8 @@ py::tuple find_photons(py::array_t<uint16_t> images,
                        int overlap_max, double sum_min, double sum_max,
                        bool fit_pixels_2d,
                        bool fit_pixels_1d_x, bool fit_pixels_1d_y,
-                       const std::string &return_pixels, bool return_map) {
+                       const std::string &return_pixels, bool return_map,
+                       bool tag_pixels) {
     py::list out_list;
 
     py::buffer_info images_buffer = images.request();
@@ -146,6 +147,7 @@ py::tuple find_photons(py::array_t<uint16_t> images,
     params.y = images_buffer.shape[1];
     params.n = images_buffer.shape[0];
     params.return_map = return_map;
+    params.tag_pixels = tag_pixels;
 
     if (!return_pixels.compare("sorted")) {
         params.return_pixels = CENTROIDS_STORE_SORTED;
@@ -162,7 +164,7 @@ py::tuple find_photons(py::array_t<uint16_t> images,
     }
 
 
-    if (centroids_calculate_params<uint16_t>(&params)
+    if (centroids_calculate_params<uint16_t, double>(&params)
             != CENTROIDS_PARAMS_OK) {
         throw std::invalid_argument("Invalid parameter combination");
     }
@@ -183,22 +185,8 @@ py::tuple find_photons(py::array_t<uint16_t> images,
 
     pybind11::gil_scoped_acquire acquire;
 
-    size_t photon_table_cols = CENTROIDS_TABLE_COLS;
-
-    if (params.fit_pixels & CENTROIDS_FIT_2D) {
-        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_2D_N;
-        photon_table_cols += CENTROIDS_FIT_EXTRA_N;
-    }
-
-    if (params.fit_pixels & CENTROIDS_FIT_1D_X) {
-        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_1D_N;
-        photon_table_cols += CENTROIDS_FIT_EXTRA_N;
-    }
-
-    if (params.fit_pixels & CENTROIDS_FIT_1D_Y) {
-        photon_table_cols += 2 * CENTROIDS_FIT_PARAMS_1D_N;
-        photon_table_cols += CENTROIDS_FIT_EXTRA_N;
-    }
+    size_t photon_table_cols =
+        centroids_calculate_table_cols<uint16_t, double>(params);
 
     // The following is some jiggery-pokery so we dont
     // have to copy the vector....
@@ -256,7 +244,8 @@ PYBIND11_MODULE(_pycentroids, m) {
            py::arg("fit_pixels_1dx"),
            py::arg("fit_pixels_1dy"),
            py::arg("return_pixels"),
-           py::arg("return_map"));
+           py::arg("return_map"),
+           py::arg("tag_pixels"));
 
      m.def("omp_info", &omp_info,
              "Return OpenMP info");
