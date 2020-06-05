@@ -40,6 +40,7 @@ def gauss():
 def test_null(dataframe):
     data = dataframe((1, 1400, 1200), 150, 10)
     table, grid, photons = find_photons(data.astype(np.uint16),
+                                        None,
                                         threshold=250, box=2)
 
     assert len(table) == 0
@@ -71,6 +72,7 @@ def test_find_photons(dataframe, gauss):
     photon_bgnd = photon_sorted[pixel_bgnd:].mean()
 
     table, grid, photons = find_photons(data.astype(np.uint16),
+                                        None,
                                         threshold=250, box=box,
                                         search_box=box,
                                         sum_min=800, sum_max=1400,
@@ -78,6 +80,8 @@ def test_find_photons(dataframe, gauss):
                                         pixel_bgnd=pixel_bgnd,
                                         return_map=True,
                                         return_pixels='unsorted')
+
+    print(table)
 
     assert len(table) == 1
     assert photons.shape == (1, 2 * box + 1, 2 * box + 1)
@@ -89,10 +93,10 @@ def test_find_photons(dataframe, gauss):
 
     # Check photon mask
     mask = np.zeros_like(grid)
-    mask[0, 0:box, :] = 1
-    mask[0, -box:, :] = 1
-    mask[0, :, 0:box] = 1
-    mask[0, :, -box:] = 1
+    mask[0, 0:box, :] = 0
+    mask[0, -box:, :] = 0
+    mask[0, :, 0:box] = 0
+    mask[0, :, -box:] = 0
     mask[0, y - box:y + box + 1, x - box:x + box + 1] = 1
     assert_array_equal(mask, grid)
 

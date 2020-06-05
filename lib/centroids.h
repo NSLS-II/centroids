@@ -48,6 +48,7 @@ extern const char* CENTROIDS_GIT_VERSION;
 #define CENTROIDS_FIT_PARAMS_2D_N             5
 #define CENTROIDS_FIT_PARAMS_1D_N             4
 #define CENTROIDS_FIT_EXTRA_N                 3
+#define CENTROIDS_FILTERED_PIXEL              0x8000
 
 enum {
     CENTROIDS_PARAMS_OK = 0,
@@ -71,6 +72,12 @@ enum {
     CENTROIDS_FIT_2D = 1,
     CENTROIDS_FIT_1D_X = 2,
     CENTROIDS_FIT_1D_Y = 4
+};
+
+enum {
+    CENTROIDS_FILTER_NONE = 0,
+    CENTROIDS_FILTER_SINGLE = 1,
+    CENTROIDS_FILTER_ALL = 2
 };
 
 extern const char *centroids_photon_table_names[];
@@ -107,6 +114,7 @@ struct centroid_params {
     int return_map;
     int fit_pixels;
     int tag_pixels;
+    int filter_pixels;
 };
 
 template <typename DT>
@@ -122,7 +130,7 @@ template <typename DT, typename OT>
 int centroids_calculate_table_cols(const centroid_params<DT, OT> &params);
 
 template<typename DT, typename OT>
-size_t centroids_process(DT *image, uint16_t *out,
+size_t centroids_process(DT *image, uint16_t *out, uint16_t *filter,
                          PhotonTable<OT> *photon_table,
                          std::vector<DT> *photons,
                          const centroid_params<DT, OT>

@@ -147,7 +147,7 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
         std::vector<DT> *photons, const centroid_params<DT, OT> &params);
 
 template<typename DT, typename OT>
-size_t centroids_find_photons(DT *image, uint16_t *out,
+size_t centroids_find_photons(DT *image, uint16_t *out, uint16_t *filter,
                               PhotonMap<DT> *photon_map,
                               const centroid_params<DT, OT> &params);
 
