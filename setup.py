@@ -20,7 +20,6 @@ with open(os.path.join(here, 'requirements.txt')) as f:
 
 # Do hack to understand if debug is set
 _debug = os.environ.get('CENTROIDS_DEBUG_OUTPUT', None)
-print(_debug)
 
 
 class CMakeExtension(Extension):
