@@ -4,6 +4,7 @@ from scipy.special import erf
 from numpy.testing import assert_array_equal  # assert_array_almost_equal
 from pycentroids import find_photons
 
+
 @pytest.fixture
 def dataframe():
     def _dataframe(size, offset, mag):
@@ -147,7 +148,7 @@ def test_mask(dataframe, gauss):
     for _x, _y in zip(x, y):
         tx = table['Pixel X'] == _x
         ty = table['Pixel Y'] == _y
-        assert (tx & ty).any() == True
+        assert (tx & ty).any()
 
     table, grid, photons = find_photons(data, mask[0],
                                         threshold=250, box=box,
@@ -162,7 +163,7 @@ def test_mask(dataframe, gauss):
     for _x, _y in zip(x, y):
         tx = table['Pixel X'] == _x
         ty = table['Pixel Y'] == _y
-        assert (tx & ty).any() == True
+        assert (tx & ty).any()
 
     test_mask = np.copy(mask[0])
     test_mask[y[0], x[0]] = 1
@@ -181,11 +182,10 @@ def test_mask(dataframe, gauss):
                       np.concatenate((y[1:3], y[5:]))):
         tx = table['Pixel X'] == _x
         ty = table['Pixel Y'] == _y
-        assert (tx & ty).any() == True
+        assert (tx & ty).any()
 
     # Check returned mask has MSB set
-    _grid = np.zeros_like(data)
-    assert_array_equal(grid[:,y[0], x[0]], np.ones(data.shape[0]) * 0x8000)
+    assert_array_equal(grid[:, y[0], x[0]], np.ones(data.shape[0]) * 0x8000)
 
     test_mask = np.copy(mask)
     test_mask[0, y[0], x[0]] = 1
@@ -203,4 +203,4 @@ def test_mask(dataframe, gauss):
     for _x, _y in zip(x[1:], y[1:]):
         tx = table['Pixel X'] == _x
         ty = table['Pixel Y'] == _y
-        assert (tx & ty).any() == True
+        assert (tx & ty).any()

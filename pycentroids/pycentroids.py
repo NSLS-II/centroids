@@ -3,7 +3,8 @@ import numpy as np
 from _pycentroids import find_photons as _find_photons
 
 
-def find_photons(images, filter=None, threshold=200, box=2, search_box=1, pixel_photon=9,
+def find_photons(images, filter=None,
+                 threshold=200, box=2, search_box=1, pixel_photon=9,
                  pixel_bgnd=15, com_photon=9, overlap_max=0, sum_min=800,
                  sum_max=1250, fit_pixels_2d=True, fit_pixels_1d_x=True,
                  fit_pixels_1d_y=True, return_pixels='none',
@@ -76,7 +77,8 @@ def find_photons(images, filter=None, threshold=200, box=2, search_box=1, pixel_
     if filter is None:
         filter = np.zeros_like(images[0])
 
-    _rtn = _find_photons(images=images, filter=filter, threshold=threshold, box=box,
+    _rtn = _find_photons(images=images, filter=filter,
+                         threshold=threshold, box=box,
                          search_box=search_box,
                          pixel_photon=pixel_photon, pixel_bgnd=pixel_bgnd,
                          com_photon=com_photon, overlap_max=overlap_max,
