@@ -3,7 +3,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Centroids API &#8212; centroids v0.1.9-10-g0ab58e0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centroids API &#8212; centroids v0.1.9-11-g67ed1ea documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
@@ -12,7 +13,7 @@
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/language_data.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="Second Pass Through Photons" href="second_pass.html" />
@@ -38,7 +39,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           centroids</a>
-        <span class="navbar-text navbar-version pull-left"><b>v0.1.9-10</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>v0.1.9-11</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -170,11 +171,11 @@
 <div class="section" id="data-processing-functions">
 <h2>Data Processing Functions<a class="headerlink" href="#data-processing-functions" title="Permalink to this headline">¶</a></h2>
 <dl class="cpp function">
-<dt id="_CPPv4I00E17centroids_process6size_tP2DTP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE">
-<span id="_CPPv3I00E17centroids_processP2DTP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE"></span><span id="_CPPv2I00E17centroids_processP2DTP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE"></span>template&lt;typename <code class="sig-name descname">DT</code>, typename <code class="sig-name descname">OT</code>&gt;<br /><span class="target" id="centroids_8h_1a610fe5a0116c6fbe81acadd9f711d321"></span>size_t <code class="sig-name descname">centroids_process</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4I00E17centroids_process6size_tP2DTP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE" title="centroids_process::DT">DT</a> *<em>image</em>, uint16_t *<em>out</em>, PhotonTable&lt;<a class="reference internal" href="#_CPPv4I00E17centroids_process6size_tP2DTP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE" title="centroids_process::OT">OT</a>&gt; *<em>photon_table</em>, std::vector&lt;<a class="reference internal" href="#_CPPv4I00E17centroids_process6size_tP2DTP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE" title="centroids_process::DT">DT</a>&gt; *<em>photons</em>, <em class="property">const</em> centroid_params&lt;<a class="reference internal" href="#_CPPv4I00E17centroids_process6size_tP2DTP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE" title="centroids_process::DT">DT</a>, <a class="reference internal" href="#_CPPv4I00E17centroids_process6size_tP2DTP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE" title="centroids_process::OT">OT</a>&gt; &amp;<em>params</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I00E17centroids_process6size_tP2DTP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Process a single CCD image to find photons. </p>
+<dt id="_CPPv4I00E17centroids_process6size_tP2DTP8uint16_tP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE">
+<span id="_CPPv3I00E17centroids_processP2DTP8uint16_tP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE"></span><span id="_CPPv2I00E17centroids_processP2DTP8uint16_tP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE"></span>template&lt;typename <code class="sig-name descname">DT</code>, typename <code class="sig-name descname">OT</code>&gt;<br /><span class="target" id="centroids_8h_1a4aeea52c44653743def6255ae9b63c72"></span>size_t <code class="sig-name descname">centroids_process</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4I00E17centroids_process6size_tP2DTP8uint16_tP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE" title="centroids_process::DT">DT</a> *<em>image</em>, uint16_t *<em>out</em>, uint16_t *<em>filter</em>, PhotonTable&lt;<a class="reference internal" href="#_CPPv4I00E17centroids_process6size_tP2DTP8uint16_tP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE" title="centroids_process::OT">OT</a>&gt; *<em>photon_table</em>, std::vector&lt;<a class="reference internal" href="#_CPPv4I00E17centroids_process6size_tP2DTP8uint16_tP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE" title="centroids_process::DT">DT</a>&gt; *<em>photons</em>, <em class="property">const</em> centroid_params&lt;<a class="reference internal" href="#_CPPv4I00E17centroids_process6size_tP2DTP8uint16_tP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE" title="centroids_process::DT">DT</a>, <a class="reference internal" href="#_CPPv4I00E17centroids_process6size_tP2DTP8uint16_tP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE" title="centroids_process::OT">OT</a>&gt; &amp;<em>params</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I00E17centroids_process6size_tP2DTP8uint16_tP8uint16_tP11PhotonTableI2OTEPNSt6vectorI2DTEERK15centroid_paramsI2DT2OTE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Loop over CCD images to find photons. </p>
 <p><dl class="simple">
-<dt><strong>Return</strong></dt><dd><p></p>
+<dt><strong>Return</strong></dt><dd><p>number of found photons </p>
 </dd>
 <dt><strong>Template Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">DT</span></code>: </p></li>
@@ -209,7 +210,7 @@
     </p>
     <p>
         &copy; Copyright 2019, Stuart B. Wilkins.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.3.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.1.0.<br/>
     </p>
   </div>
 </footer>
