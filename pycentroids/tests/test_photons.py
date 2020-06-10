@@ -40,6 +40,7 @@ def gauss():
 def test_null(dataframe):
     data = dataframe((1, 1400, 1200), 150, 10)
     table, grid, photons = find_photons(data.astype(np.uint16),
+                                        None,
                                         threshold=250, box=2)
 
     assert len(table) == 0
@@ -71,6 +72,7 @@ def test_find_photons(dataframe, gauss):
     photon_bgnd = photon_sorted[pixel_bgnd:].mean()
 
     table, grid, photons = find_photons(data.astype(np.uint16),
+                                        None,
                                         threshold=250, box=box,
                                         search_box=box,
                                         sum_min=800, sum_max=1400,
@@ -89,10 +91,6 @@ def test_find_photons(dataframe, gauss):
 
     # Check photon mask
     mask = np.zeros_like(grid)
-    mask[0, 0:box, :] = 1
-    mask[0, -box:, :] = 1
-    mask[0, :, 0:box] = 1
-    mask[0, :, -box:] = 1
     mask[0, y - box:y + box + 1, x - box:x + box + 1] = 1
     assert_array_equal(mask, grid)
 
@@ -110,3 +108,99 @@ def test_find_photons(dataframe, gauss):
     assert pytest.approx(table['Fit 1DY Y'][0], 0.01) == y + cen_y
     assert pytest.approx(table['Fit 1DX Sigma'][0], 0.05) == sigma
     assert pytest.approx(table['Fit 1DY Sigma'][0], 0.05) == sigma
+
+
+def test_mask(dataframe, gauss):
+    image_x = 1400
+    image_y = 1200
+    x = np.array([17, 50, 89, 400, 17, 762, 90, 1100])
+    y = np.array([20, 100, 400, 753, 20, 1000, 41, 200])
+    cen_x = 0.4
+    cen_y = 0.15
+    sigma = 0.46
+    bgnd = 150
+    box = 3
+    pixel_photon = 9
+    pixel_bgnd = 12
+
+    photon = gauss(box, cen_x, cen_y, 500, sigma)
+    data = dataframe((2, image_x, image_y), bgnd, 5)
+
+    for _x, _y in zip(x[:4], y[:4]):
+        data[0, _y - box:_y + box + 1, _x - box:_x + box + 1] += photon
+    for _x, _y in zip(x[4:], y[4:]):
+        data[1, _y - box:_y + box + 1, _x - box:_x + box + 1] += photon
+
+    data = data.astype(np.uint16)
+    mask = np.zeros_like(data)
+
+    table, grid, photons = find_photons(data,
+                                        mask,
+                                        threshold=250, box=box,
+                                        search_box=box,
+                                        sum_min=800, sum_max=1400,
+                                        pixel_photon=pixel_photon,
+                                        pixel_bgnd=pixel_bgnd,
+                                        return_map=True,
+                                        return_pixels='unsorted')
+
+    assert len(table) == len(x)
+    for _x, _y in zip(x, y):
+        tx = table['Pixel X'] == _x
+        ty = table['Pixel Y'] == _y
+        assert (tx & ty).any()
+
+    table, grid, photons = find_photons(data, mask[0],
+                                        threshold=250, box=box,
+                                        search_box=box,
+                                        sum_min=800, sum_max=1400,
+                                        pixel_photon=pixel_photon,
+                                        pixel_bgnd=pixel_bgnd,
+                                        return_map=True,
+                                        return_pixels='unsorted')
+
+    assert len(table) == len(x)
+    for _x, _y in zip(x, y):
+        tx = table['Pixel X'] == _x
+        ty = table['Pixel Y'] == _y
+        assert (tx & ty).any()
+
+    test_mask = np.copy(mask[0])
+    test_mask[y[0], x[0]] = 1
+
+    table, grid, photons = find_photons(data, test_mask,
+                                        threshold=250, box=box,
+                                        search_box=box,
+                                        sum_min=800, sum_max=1400,
+                                        pixel_photon=pixel_photon,
+                                        pixel_bgnd=pixel_bgnd,
+                                        return_map=True,
+                                        return_pixels='unsorted')
+
+    assert len(table) == (len(x) - 2)
+    for _x, _y in zip(np.concatenate((x[1:3], x[5:])),
+                      np.concatenate((y[1:3], y[5:]))):
+        tx = table['Pixel X'] == _x
+        ty = table['Pixel Y'] == _y
+        assert (tx & ty).any()
+
+    # Check returned mask has MSB set
+    assert_array_equal(grid[:, y[0], x[0]], np.ones(data.shape[0]) * 0x8000)
+
+    test_mask = np.copy(mask)
+    test_mask[0, y[0], x[0]] = 1
+
+    table, grid, photons = find_photons(data, test_mask,
+                                        threshold=250, box=box,
+                                        search_box=box,
+                                        sum_min=800, sum_max=1400,
+                                        pixel_photon=pixel_photon,
+                                        pixel_bgnd=pixel_bgnd,
+                                        return_map=True,
+                                        return_pixels='unsorted')
+
+    assert len(table) == (len(x) - 1)
+    for _x, _y in zip(x[1:], y[1:]):
+        tx = table['Pixel X'] == _x
+        ty = table['Pixel Y'] == _y
+        assert (tx & ty).any()

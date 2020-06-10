@@ -33,13 +33,10 @@ jobs:
         displayName: Run lint tests
       - bash: |
             source activate testenv
-            export CENTROIDS_DEBUG_OUTPUT=1
-            python setup.py install
-        displayName: Install using setup.py
-      - script: |
-            source activate testenv
             pip install pytest
-            pytest --pyargs pycentroids.tests
+            export CENTROIDS_DEBUG_OUTPUT=1
+            export CENTROIDS_VERBOSE_BUILD=1
+            python setup.py test
         displayName: 'Test with pytest'
 
   - job: 'BuildLib'

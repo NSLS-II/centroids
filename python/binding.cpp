@@ -102,6 +102,7 @@ py::object omp_info(void) {
 }
 
 py::tuple find_photons(py::array_t<uint16_t> images,
+                       py::array_t<uint16_t> filter,
                        uint16_t threshold, int box, int search_box,
                        int pixel_photon, int pixel_bgnd, int com_photon,
                        int overlap_max, double sum_min, double sum_max,
@@ -112,12 +113,33 @@ py::tuple find_photons(py::array_t<uint16_t> images,
     py::list out_list;
 
     py::buffer_info images_buffer = images.request();
+    py::buffer_info filter_buffer = filter.request();
 
     if (images_buffer.ndim != 3) {
         throw std::runtime_error("Number of dimensions must be 3");
     }
 
+    if ((images_buffer.ndim != 3) && (images_buffer.ndim != 2)) {
+        throw std::runtime_error("Number of dimensions must be 2 or 3");
+    }
+
+    if (filter_buffer.ndim == 2) {
+        if ((filter_buffer.shape[1] != images_buffer.shape[2]) &&
+            (filter_buffer.shape[0] != images_buffer.shape[1])) {
+            throw std::runtime_error(
+                "Shapes of filter and images must match");
+        }
+    } else if (filter_buffer.ndim == 3) {
+        for (int i = 0; i < 3; i++) {
+            if (filter_buffer.shape[i] != images_buffer.shape[i]) {
+                throw std::runtime_error(
+                    "Shapes of filter and images must match");
+            }
+        }
+    }
+
     uint16_t *images_ptr = reinterpret_cast<uint16_t*>(images_buffer.ptr);
+    uint16_t *filter_ptr = reinterpret_cast<uint16_t*>(filter_buffer.ptr);
 
     PhotonTable<double>* photon_table(new PhotonTable<double>);
     std::vector<uint16_t>* pixels = NULL;
@@ -148,6 +170,12 @@ py::tuple find_photons(py::array_t<uint16_t> images,
     params.n = images_buffer.shape[0];
     params.return_map = return_map;
     params.tag_pixels = tag_pixels;
+    if (filter_buffer.ndim == 2) {
+        // Single ndim
+        params.filter_pixels = CENTROIDS_FILTER_SINGLE;
+    } else if (filter_buffer.ndim == 3) {
+        params.filter_pixels = CENTROIDS_FILTER_ALL;
+    }
 
     if (!return_pixels.compare("sorted")) {
         params.return_pixels = CENTROIDS_STORE_SORTED;
@@ -162,7 +190,6 @@ py::tuple find_photons(py::array_t<uint16_t> images,
     if (params.return_pixels != CENTROIDS_STORE_NONE) {
         pixels = new std::vector<uint16_t>;
     }
-
 
     if (centroids_calculate_params<uint16_t, double>(&params)
             != CENTROIDS_PARAMS_OK) {
@@ -181,7 +208,7 @@ py::tuple find_photons(py::array_t<uint16_t> images,
     pybind11::gil_scoped_release release;
 
     size_t nphotons = centroids_process<uint16_t, double>(
-            images_ptr, out_ptr, photon_table, pixels, params);
+            images_ptr, out_ptr, filter_ptr, photon_table, pixels, params);
 
     pybind11::gil_scoped_acquire acquire;
 
@@ -231,6 +258,7 @@ PYBIND11_MODULE(_pycentroids, m) {
      m.def("find_photons", &find_photons,
            "Find photons",
            py::arg("images"),
+           py::arg("filter"),
            py::arg("threshold"),
            py::arg("box"),
            py::arg("search_box"),

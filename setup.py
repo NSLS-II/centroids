@@ -20,7 +20,7 @@ with open(os.path.join(here, 'requirements.txt')) as f:
 
 # Do hack to understand if debug is set
 _debug = os.environ.get('CENTROIDS_DEBUG_OUTPUT', None)
-print(_debug)
+_verbose = os.environ.get('CENTROIDS_VERBOSE_BUILD', None)
 
 
 class CMakeExtension(Extension):
@@ -66,6 +66,8 @@ class CMakeBuild(build_ext):
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
             cmake_args += ['-DBUILD_DOCS=OFF']
             cmake_args += ['-DBUILD_LIB=OFF']
+            if _verbose is not None:
+                cmake_args += ['-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON']
             if _debug is not None:
                 cmake_args += ['-DDEBUG_OUTPUT=ON']
             build_args += ['--target', '_pycentroids']
