@@ -697,6 +697,7 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
     for (int i = 0; i < CENTROIDS_FIT_PARAMS_CONST_MAX; i++) {
         fit_data_2d.p0[i] = params.fit_params_const[i];
         fit_data_1d.p0[i] = params.fit_params_const[i];
+        DEBUG_PRINT("Fit constraint %d = %lf\n", i, params.fit_params_const[i]);
     }
 
     // Loop over all pixel clusters
