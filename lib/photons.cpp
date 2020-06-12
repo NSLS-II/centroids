@@ -171,6 +171,11 @@ void centroids_initialize_params(centroid_params<DT, OT> *params) {
     params->fit_pixels = 0;
     params->tag_pixels = 0;
     params->filter_pixels = CENTROIDS_FILTER_NONE;
+
+    params->fit_params_const[0] = 0.6;
+    params->fit_params_const[1] = 0;
+    params->fit_params_const[2] = 0.2;
+    params->fit_params_const[3] = 0.45;
 }
 
 /* -------------------------------------------------------------------------*/
@@ -279,53 +284,73 @@ void centroids_bubble_sort(DT *vals, DT *x, DT *y, const int n) {
     }
 }
 
-template <typename OT>
-OT centroids_2dgauss_int(OT x, OT y, const double *p) {
-    // p[0] = x0
-    // p[1] = y0
-    // p[2] = bgnd
-    // p[3] = amplitude
-    // p[4] = sigma
-    double xmin = (x - 0.5 - p[0]) / (p[4] * sqrt(2));
-    double xmax = (x + 0.5 - p[0]) / (p[4] * sqrt(2));
-    double ymin = (y - 0.5 - p[1]) / (p[4] * sqrt(2));
-    double ymax = (y + 0.5 - p[1]) / (p[4] * sqrt(2));
-    double out = p[2] + (p[3]
-            * (erf(xmin) - erf(xmax)) * (erf(ymin) - erf(ymax)));
-    return out;
+double centroids_param_trans(double x, double r, double c) {
+    return c + (r * tanh(x));
+}
+
+double centroids_param_trans_inv(double x, double r, double c) {
+    return atanh((x - c) / r);
 }
 
 template <typename OT>
-OT centroids_1dgauss_int(OT x, const double *p) {
+OT centroids_2dgauss_int(OT x, OT y, const double *p, const double *p0) {
     // p[0] = x0
-    // p[1] = bgnd
+    // p[1] = y0
     // p[2] = amplitude
     // p[3] = sigma
+    // p[4] = bgnd
 
-    double xmin = (x - 0.5 - p[0]) / (p[3] * sqrt(2));
-    double xmax = (x + 0.5 - p[0]) / (p[3] * sqrt(2));
-    double out = p[1] + (p[2]
+    // p0[0] = pos range
+    // p0[1] = pos centr
+    // p0[2] = sigma range
+    // p0[3] = sigma centr
+
+    double x0 = centroids_param_trans(p[0], p0[0], p0[1]);
+    double y0 = centroids_param_trans(p[1], p0[0], p0[1]);
+    double sigma = centroids_param_trans(p[3], p0[2], p0[3]);
+
+    double xmin = (x - 0.5 - x0) / (sigma * sqrt(2));
+    double xmax = (x + 0.5 - x0) / (sigma * sqrt(2));
+    double ymin = (y - 0.5 - y0) / (sigma * sqrt(2));
+    double ymax = (y + 0.5 - y0) / (sigma * sqrt(2));
+    double out = (erf(xmin) - erf(xmax)) * (erf(ymin) - erf(ymax));
+
+    return p[4] + (p[2] * out);
+}
+
+template <typename OT>
+OT centroids_1dgauss_int(OT x, const double *p, const double *p0) {
+    // p[0] = x0
+    // p[1] = amplitude
+    // p[2] = sigma
+    // p[3] = bgnd
+    // p0[0] = sigma range
+    // p0[1] = sigma centr
+
+    double x0 = centroids_param_trans(p[0], p0[0], p0[1]);
+    double sigma = centroids_param_trans(p[2], p0[2], p0[3]);
+
+    double xmin = (x - 0.5 - x0) / (sigma * sqrt(2));
+    double xmax = (x + 0.5 - x0) / (sigma * sqrt(2));
+    double out = p[3] + (p[1]
             * (erf(xmax) - erf(xmin)));
     return out;
 }
 
 template <typename OT>
-OT centroids_std_error_estimate_1d(OT *pixels,
-        double *fit_params, const int N) {
+OT centroids_std_error_estimate_2d(OT *pixels,
+        double *p, double *p0, const int N) {
     OT sum = 0;
     OT calc;
 
     int i = 0;
-    for (int x = -N; x <= N; x++) {
-        // Evaluate fit function at each point
-        calc = centroids_1dgauss_int<OT>((OT)x, fit_params);
-
-        DEBUG_PRINT("FIT actual = %lf fit = %lf residual = %lf\n",
-                (double)pixels[i], (double)calc,
-                (double)abs(pixels[i] - calc));
-
-        sum += pow(pixels[i] - calc, 2);
-        i++;
+    for (int y = -N; y <= N; y++) {
+        for (int x = -N; x <= N; x++) {
+            // Evaluate fit function at each point
+            calc = centroids_2dgauss_int<OT>((OT)x, (OT)y, p, p0);
+            sum += pow(pixels[i] - calc, 2);
+            i++;
+        }
     }
 
     sum /= (OT)N;
@@ -334,24 +359,17 @@ OT centroids_std_error_estimate_1d(OT *pixels,
 }
 
 template <typename OT>
-OT centroids_std_error_estimate_2d(OT *pixels,
-        double *fit_params, const int N) {
+OT centroids_std_error_estimate_1d(OT *pixels,
+        double *p, double *p0, const int N) {
     OT sum = 0;
     OT calc;
 
     int i = 0;
-    for (int y = -N; y <= N; y++) {
-        for (int x = -N; x <= N; x++) {
-            // Evaluate fit function at each point
-            calc = centroids_2dgauss_int<OT>((OT)x, (OT)y, fit_params);
-
-            DEBUG_PRINT("FIT actual = %lf fit = %lf residual = %lf\n",
-                    (double)pixels[i], (double)calc,
-                    (double)abs(pixels[i] - calc));
-
-            sum += pow(pixels[i] - calc, 2);
-            i++;
-        }
+    for (int x = -N; x <= N; x++) {
+        // Evaluate fit function at each point
+        calc = centroids_1dgauss_int<OT>((OT)x, p, p0);
+        sum += pow(pixels[i] - calc, 2);
+        i++;
     }
 
     sum /= (OT)N;
@@ -369,7 +387,7 @@ void centroids_evaluate_2dgauss(const double *p, int m_dat,
     int i = 0;
     for (int y = -D->box; y <= D->box; y++) {
         for (int x = -D->box; x <= D->box; x++) {
-            double out = centroids_2dgauss_int((OT)x, (OT)y, p);
+            double out = centroids_2dgauss_int((OT)x, (OT)y, p, D->p0);
             fvec[i] = D->measured[i] - out;
             i++;
         }
@@ -385,7 +403,7 @@ void centroids_evaluate_1dgauss(const double *p, int m_dat,
 
     int i = 0;
     for (int x = -D->box; x <= D->box; x++) {
-        double out = centroids_1dgauss_int((OT)x, p);
+        double out = centroids_1dgauss_int((OT)x, p, D->p0);
         fvec[i] = D->measured[i] - out;
         i++;
     }
@@ -501,7 +519,6 @@ size_t centroids_process(DT *image, uint16_t *out, uint16_t *filter,
                         std::make_move_iterator(local_photons.end()));
             }
 
-            DEBUG_PRINT("local_n_photons = %zu\n", local_n_photons);
             n_photons += local_n_photons;
 
             if (!params.return_map) {
@@ -539,26 +556,91 @@ int centroids_calculate_com(const std::unique_ptr <DT[]> &pixels,
 }
 
 template<typename DT, typename OT>
-void centroids_fit_photon(double *fit_params,
-        fit_data_struct<OT> *fit_data, PhotonTable<OT> *photon_table,
-        const bool fit_2d,
-        const centroid_params<DT, OT> &params, int n_params) {
+void centroids_fit_photon(double *p, fit_data_struct<OT> *fit_data,
+    PhotonTable<OT> *photon_table, const bool fit_2d,
+    const centroid_params<DT, OT> &params, int n_params) {
+    double p_err[CENTROIDS_FIT_PARAMS_MAX];
+    double p_frac_err[CENTROIDS_FIT_PARAMS_MAX];
+
     lm_status_struct fit_status;
     lm_control_struct control = lm_control_double;
+
     control.verbosity = 0;
-    control.patience = 1000;
-    double fit_params_err[CENTROIDS_FIT_PARAMS_MAX];
+    // control.stepbound = 0.01;
+    // control.patience = 1000;
+
+    double *p0 = fit_data->p0;
+
+#ifdef DEBUG_OUTPUT
+    if (fit_2d) {
+        DEBUG_COMMENT("2D Fit\n");
+    } else {
+        DEBUG_COMMENT("1D Fit\n")
+    }
+
+    for (int i = 0; i < n_params; i++) {
+        DEBUG_PRINT("GUESS : par[%i] = %12g\n",
+                i, p[i]);
+    }
+#endif
+
+    // Now convert guess to other units
 
     if (fit_2d) {
-        lmmin2(n_params, fit_params, fit_params_err,
+        p[0] = centroids_param_trans(p[0], p0[0], p0[1]);
+        p[1] = centroids_param_trans(p[1], p0[0], p0[1]);
+        p[3] = centroids_param_trans(p[3], p0[2], p0[3]);
+    } else {
+        p[0] = centroids_param_trans(p[0], p0[0], p0[1]);
+        p[2] = centroids_param_trans(p[2], p0[0], p0[1]);
+    }
+
+    if (fit_2d) {
+        lmmin2(n_params, p, p_err,
                 NULL, params.box_t, NULL, (const void*) fit_data,
                 centroids_evaluate_2dgauss<OT>, &control,
                 &fit_status);
     } else {
-        lmmin2(n_params, fit_params, fit_params_err,
+        lmmin2(n_params, p, p_err,
                 NULL, params.box_t, NULL, (const void*) fit_data,
                 centroids_evaluate_1dgauss<OT>, &control,
                 &fit_status);
+    }
+
+    // Calculate Standard Error
+
+    OT std_err;
+    if (fit_2d) {
+        std_err = centroids_std_error_estimate_2d<OT>(
+             fit_data->measured, p, p0, params.box);
+    } else {
+        std_err = centroids_std_error_estimate_1d<OT>(
+             fit_data->measured, p, p0, params.box);
+    }
+
+    // Calculate fractional errors
+
+    for (int i = 0; i < n_params; i++) {
+        p_frac_err[i] = pow(p_err[i], 0.5) / p[i];
+        DEBUG_PRINT("ERROR : err[%i] = %12g\n",
+            i, p_frac_err[i]);
+    }
+
+    // Return paramaters to natural units.
+
+    if (fit_2d) {
+        p[0] = centroids_param_trans(p[0], p0[0], p0[1]);
+        p[1] = centroids_param_trans(p[1], p0[0], p0[1]);
+        p[3] = centroids_param_trans(p[3], p0[2], p0[3]);
+    } else {
+        p[0] = centroids_param_trans(p[0], p0[0], p0[1]);
+        p[2] = centroids_param_trans(p[2], p0[2], p0[3]);
+    }
+
+    // Set errors correctly
+
+    for (int i = 0; i < n_params; i++) {
+        p_err[i] = p[i] * p_frac_err[i];
     }
 
 #ifdef DEBUG_OUTPUT
@@ -567,31 +649,22 @@ void centroids_fit_photon(double *fit_params,
 
     for (int i = 0; i < n_params; i++) {
         DEBUG_PRINT("FIT : par[%i] = %12g +- %12g\n",
-                i, fit_params[i], fit_params_err[i]);
-    }
-#endif
-
-    OT std_err;
-    if (fit_2d) {
-        std_err = centroids_std_error_estimate_2d<OT>(
-             fit_data->measured, fit_params, params.box);
-    } else {
-        std_err = centroids_std_error_estimate_1d<OT>(
-             fit_data->measured, fit_params, params.box);
+                i, p[i], p[i] * p_frac_err[i]);
     }
 
     DEBUG_PRINT("FIT std err = %lf\n", (double)std_err);
+#endif
 
     // Return fit in absolute pixel coords
-    fit_params[0] += fit_data->x;
+    p[0] += fit_data->x;
     if (fit_2d) {
-        fit_params[1] += fit_data->y;
+        p[1] += fit_data->y;
     }
 
-    photon_table->insert(photon_table->end(), &fit_params[0],
-            &fit_params[n_params]);
-    photon_table->insert(photon_table->end(), &fit_params_err[0],
-            &fit_params_err[n_params]);
+    photon_table->insert(photon_table->end(), &p[0],
+            &p[n_params]);
+    photon_table->insert(photon_table->end(), &p_err[0],
+            &p_err[n_params]);
 
     photon_table->insert(photon_table->end(),
             {(OT)fit_status.fnorm, (OT)fit_status.outcome,
@@ -616,10 +689,15 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
     // pixel data using liblmfit
 
     fit_data_struct<OT> fit_data_2d =
-        { pixel_cluster_fit.get(), 0, 0, params.box};
+        { pixel_cluster_fit.get(), 0, 0, params.box, { 0 }};
 
     fit_data_struct<OT> fit_data_1d =
-        { pixel_cluster_fit_int.get(), 0, 0, params.box};
+        { pixel_cluster_fit_int.get(), 0, 0, params.box, { 0 }};
+
+    for (int i = 0; i < CENTROIDS_FIT_PARAMS_CONST_MAX; i++) {
+        fit_data_2d.p0[i] = params.fit_params_const[i];
+        fit_data_1d.p0[i] = params.fit_params_const[i];
+    }
 
     // Loop over all pixel clusters
     for (auto photon = photon_map->begin();
@@ -731,17 +809,18 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
 
         if (params.fit_pixels & CENTROIDS_FIT_2D) {
             // Set the initial guess values
-            fit_params[0] = 0;
-            fit_params[1] = 0;
-            fit_params[2] = bgnd;
-            fit_params[3] = pixel_cluster[0];
-            fit_params[4] = 0.5;
+            fit_params[0] = comx - xvals[0];
+            fit_params[1] = comy - yvals[0];
+            fit_params[2] = pixel_cluster[0] - bgnd;
+            fit_params[3] = 0.5;
+            fit_params[4] = bgnd;
 
             fit_data_2d.x = xvals[0];
             fit_data_2d.y = yvals[0];
 
-            centroids_fit_photon<DT, OT>(fit_params, &fit_data_2d,
-                    photon_table, true, params, CENTROIDS_FIT_PARAMS_2D_N);
+            centroids_fit_photon<DT, OT>(fit_params,
+                &fit_data_2d, photon_table, true, params,
+                CENTROIDS_FIT_PARAMS_2D_N);
         }
 
         // ---------------------------------
@@ -760,14 +839,15 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
             }
 
             // Set the initial guess values
-            fit_params[0] = 0;
-            fit_params[1] = bgnd * params.box_n;
-            fit_params[2] = 500;
-            fit_params[3] = 0.5;
+            fit_params[0] = comx - xvals[0];
+            fit_params[3] = bgnd * params.box_n;
+            fit_params[1] = pixel_cluster_fit_int[params.box] - fit_params[3];
+            fit_params[2] = 0.5;
             fit_data_1d.x = xvals[0];
 
-            centroids_fit_photon<DT, OT>(fit_params, &fit_data_1d,
-                    photon_table, false, params, CENTROIDS_FIT_PARAMS_1D_N);
+            centroids_fit_photon<DT, OT>(fit_params,
+                &fit_data_1d, photon_table, false, params,
+                CENTROIDS_FIT_PARAMS_1D_N);
         }
 
         // ---------------------------------
@@ -786,14 +866,15 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
             }
 
             // Set the initial guess values
-            fit_params[0] = 0;
-            fit_params[1] = bgnd * params.box_n;
-            fit_params[2] = 500;
-            fit_params[3] = 0.5;
+            fit_params[0] = comy - yvals[0];
+            fit_params[3] = bgnd * params.box_n;
+            fit_params[1] = pixel_cluster_fit_int[params.box] - fit_params[3];
+            fit_params[2] = 0.5;
             fit_data_1d.x = yvals[0];
 
-            centroids_fit_photon<DT, OT>(fit_params, &fit_data_1d,
-                    photon_table, false, params, CENTROIDS_FIT_PARAMS_1D_N);
+            centroids_fit_photon<DT, OT>(fit_params,
+                &fit_data_1d, photon_table, false, params,
+                CENTROIDS_FIT_PARAMS_1D_N);
         }
 
         // --------------------------

@@ -72,20 +72,20 @@ const char *centroids_photon_table_names[] = {
 };
 
 const char *centroids_photon_table_names_fit2d[] = {
-    "Fit X", "Fit Y", "Fit Bgnd", "Fit Amp", "Fit Sigma",
-    "Fit Err X", "Fit Err Y", "Fit Err Bgnd", "Fit Err Amp", "Fit Err Sigma",
+    "Fit X", "Fit Y", "Fit Amp", "Fit Sigma", "Fit Bgnd",
+    "Fit Err X", "Fit Err Y", "Fit Err Amp", "Fit Err Sigma", "Fit Err Bgnd",
     "Fit Fnorm", "Fit Outcome", "Fit StdErr"
 };
 
 const char *centroids_photon_table_names_fit1dx[] = {
-    "Fit 1DX X", "Fit 1DX Bgnd", "Fit 1DX Amp", "Fit 1DX Sigma",
-    "Fit 1DX Err X", "Fit 1DX Err Bgnd", "Fit 1DX Err Amp", "Fit 1DX Err Sigma",
+    "Fit 1DX X", "Fit 1DX Amp", "Fit 1DX Sigma", "Fit 1DX Bgnd",
+    "Fit 1DX Err X", "Fit 1DX Err Amp", "Fit 1DX Err Sigma", "Fit 1DX Err Bgnd",
     "Fit 1DX Fnorm", "Fit 1DX Outcome", "Fit 1DX StdErr"
 };
 
 const char *centroids_photon_table_names_fit1dy[] = {
-    "Fit 1DY Y", "Fit 1DY Bgnd", "Fit 1DY Amp", "Fit 1DY Sigma",
-    "Fit 1DY Err Y", "Fit 1DY Err Bgnd", "Fit 1DY Err Amp", "Fit 1DY Err Sigma",
+    "Fit 1DY Y", "Fit 1DY Amp", "Fit 1DY Sigma", "Fit 1DY Bgnd",
+    "Fit 1DY Err Y", "Fit 1DY Err Amp", "Fit 1DY Err Sigma", "Fit 1DY Err Bgnd",
     "Fit 1DY Fnorm", "Fit 1DY Outcome", "Fit 1DY StdErr"
 };
 
@@ -95,6 +95,7 @@ struct fit_data_struct {
     OT x;
     OT y;
     int box;
+    double p0[CENTROIDS_FIT_PARAMS_CONST_MAX];
 };
 
 /* -------------------------------------------------------------------------*/
@@ -164,17 +165,30 @@ template <typename DT>
 void centroids_bubble_sort(DT *vals, DT *x, DT *y, const int n);
 
 template <typename OT>
-OT centroids_std_error_estimate_2d(OT *pixels, double *fit_params, const int N);
+OT centroids_std_error_estimate_2d(OT *pixels, double *p,
+    double *p0, const int N);
 
 template <typename OT>
-OT centroids_std_error_estimate_1d(OT *pixels, double *fit_params, const int N);
+OT centroids_std_error_estimate_1d(OT *pixels, double *p,
+    double *p0, const int N);
 
 template <typename OT>
-OT centroids_2dgauss_int(OT x, OT y, const double *p);
+OT centroids_2dgauss_int(OT x, OT y, const double *p, const double *p0);
+
+template <typename OT>
+OT centroids_1dgauss_int(OT x, const double *p, const double *p0);
 
 template <typename OT>
 void centroids_evaluate_2dgauss(const double *par, int m_dat,
         const void *data, double *fvec, int *info);
 
+template <typename OT>
+void centroids_evaluate_1dgauss(const double *par, int m_dat,
+        const void *data, double *fvec, int *info);
+
+template<typename DT, typename OT>
+void centroids_fit_photon(double *p, fit_data_struct<OT> *fit_data,
+    PhotonTable<OT> *photon_table, const bool fit_2d,
+    const centroid_params<DT, OT> &params, int n_params);
 
 #endif  // LIB_PHOTONS_H_

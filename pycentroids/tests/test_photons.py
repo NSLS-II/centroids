@@ -1,16 +1,20 @@
 import pytest
 import numpy as np
 from scipy.special import erf
-from numpy.testing import assert_array_equal  # assert_array_almost_equal
+from numpy.testing import assert_array_equal
 from pycentroids import find_photons
 
+import pandas as pd
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', None)
+pd.set_option('display.max_colwidth', None)
 
 @pytest.fixture
 def dataframe():
-    def _dataframe(size, offset, mag):
-        data = np.random.rand(*size)
-        data *= mag
-        data += offset
+    def _dataframe(size, offset, sigma):
+        data = np.random.normal(offset, sigma, np.product(size))
+        data = data.reshape(size)
         return data
 
     return _dataframe
@@ -32,13 +36,16 @@ def gauss():
 
         out = out / out.max()
         out *= amp
-        return out
+
+        # Now add noise
+        noise = np.random.normal(1, 0.000005, len(out))
+        return out * noise
 
     return _gauss
 
 
 def test_null(dataframe):
-    data = dataframe((1, 1400, 1200), 150, 10)
+    data = dataframe((1, 1400, 1200), 150, 1)
     table, grid, photons = find_photons(data.astype(np.uint16),
                                         None,
                                         threshold=250, box=2)
@@ -60,7 +67,7 @@ def test_find_photons(dataframe, gauss):
     pixel_bgnd = 12
 
     photon = gauss(box, cen_x, cen_y, 500, sigma)
-    data = dataframe((1, image_x, image_y), bgnd, 5)
+    data = dataframe((1, image_x, image_y), bgnd, 1)
 
     data[0, y - box:y + box + 1, x - box:x + box + 1] += photon
     data = data.astype(np.uint16)
@@ -95,19 +102,20 @@ def test_find_photons(dataframe, gauss):
     assert_array_equal(mask, grid)
 
     # Check pixel values and fit
+    print(table)
     assert table['Pixel X'][0] == x
     assert table['Pixel Y'][0] == y
     assert pytest.approx(table['COM X'][0], 0.01) == x + cen_x
     assert pytest.approx(table['COM Y'][0], 0.01) == y + cen_y
     assert pytest.approx(table['Int'][0]) == photon_int
     assert pytest.approx(table['Bgnd'][0]) == photon_bgnd
-    # assert pytest.approx(table['Fit X'][0], 0.01) == x + cen_x
-    # assert pytest.approx(table['Fit Y'][0], 0.01) == y + cen_y
-    # assert pytest.approx(table['Fit Sigma'][0], 0.05) == sigma
-    # assert pytest.approx(table['Fit 1DX X'][0], 0.01) == x + cen_x
-    # assert pytest.approx(table['Fit 1DY Y'][0], 0.01) == y + cen_y
-    # assert pytest.approx(table['Fit 1DX Sigma'][0], 0.05) == sigma
-    # assert pytest.approx(table['Fit 1DY Sigma'][0], 0.05) == sigma
+    assert pytest.approx(table['Fit X'][0], 0.05) == x + cen_x
+    assert pytest.approx(table['Fit Y'][0], 0.05) == y + cen_y
+    assert pytest.approx(table['Fit Sigma'][0], 0.1) == sigma
+    assert pytest.approx(table['Fit 1DX X'][0], 0.05) == x + cen_x
+    assert pytest.approx(table['Fit 1DY Y'][0], 0.05) == y + cen_y
+    assert pytest.approx(table['Fit 1DX Sigma'][0], 0.1) == sigma
+    assert pytest.approx(table['Fit 1DY Sigma'][0], 0.1) == sigma
 
 
 def test_mask(dataframe, gauss):
