@@ -80,10 +80,10 @@ def test_find_photons(dataframe, gauss):
     photon_bgnd = photon_sorted[pixel_bgnd:].mean()
 
     fit_constraints = {
-        "pos_range" : 0.5,
-        "pos_cent" : 0,
-        "sigma_range" : 0.2,
-        "sigma_cent" : 0.45
+        "pos_range": 0.5,
+        "pos_cent": 0,
+        "sigma_range": 0.2,
+        "sigma_cent": 0.45
     }
 
     table, grid, photons = find_photons(data.astype(np.uint16),

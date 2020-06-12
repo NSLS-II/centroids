@@ -7,7 +7,7 @@ def find_photons(images, filter=None,
                  threshold=200, box=2, search_box=1, pixel_photon=9,
                  pixel_bgnd=15, com_photon=9, overlap_max=0, sum_min=800,
                  sum_max=1250, fit_pixels_2d=True, fit_pixels_1d_x=True,
-                 fit_pixels_1d_y=True, fit_constraints = None,
+                 fit_pixels_1d_y=True, fit_constraints=None,
                  return_pixels='none', return_map=False, tag_pixels=False):
     """Find photons in CCD images and process for sub-pixel center.
 
