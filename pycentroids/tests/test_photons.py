@@ -79,6 +79,13 @@ def test_find_photons(dataframe, gauss):
     photon_int = (photon_sorted[:pixel_photon] - photon_bgnd).sum()
     photon_bgnd = photon_sorted[pixel_bgnd:].mean()
 
+    fit_constraints = {
+        "pos_range" : 0.5,
+        "pos_cent" : 0,
+        "sigma_range" : 0.2,
+        "sigma_cent" : 0.45
+    }
+
     table, grid, photons = find_photons(data.astype(np.uint16),
                                         None,
                                         threshold=250, box=box,
@@ -86,6 +93,7 @@ def test_find_photons(dataframe, gauss):
                                         sum_min=800, sum_max=1400,
                                         pixel_photon=pixel_photon,
                                         pixel_bgnd=pixel_bgnd,
+                                        fit_constraints=fit_constraints,
                                         return_map=True,
                                         return_pixels='unsorted')
 
