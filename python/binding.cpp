@@ -168,7 +168,7 @@ py::tuple find_photons(py::array_t<uint16_t> images,
         params.fit_pixels |= CENTROIDS_FIT_1D_Y;
     }
 
-    if (!fit_constraints.empty()) {
+    if (!fit_constraints.size()) {
         params.fit_params_const[0] = py::float_(fit_constraints["pos_range"]);
         params.fit_params_const[1] = py::float_(fit_constraints["pos_cent"]);
         params.fit_params_const[2] = py::float_(fit_constraints["sigma_range"]);
