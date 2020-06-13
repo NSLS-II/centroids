@@ -1,5 +1,3 @@
-# variables:
-#  disable.coverage.autogenerate: 'true'
 jobs:
   - job: 'BuildPython'
     pool:
@@ -44,7 +42,7 @@ jobs:
             source activate testenv
             pip install pytest
             pip install pytest-cov
-            pytest --doctest-modules --junitxml=junit/test-results.xml --cov=. --cov-report=xml --cov-report=html
+            pytest --doctest-modules --junitxml=junit/test-results.xml --cov=. --cov-report=xml
         displayName: 'Test with pytest'
       - task: PublishTestResults@2
         condition: succeededOrFailed()
