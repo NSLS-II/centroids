@@ -1,5 +1,5 @@
-variables:
-  disable.coverage.autogenerate: 'true'
+# variables:
+#  disable.coverage.autogenerate: 'true'
 jobs:
   - job: 'BuildPython'
     pool:
