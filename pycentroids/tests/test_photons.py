@@ -1,14 +1,19 @@
 import pytest
 import numpy as np
+import pandas as pd
 from scipy.special import erf
 from numpy.testing import assert_array_equal
 from pycentroids import find_photons
+from packaging import version
 
-import pandas as pd
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', None)
-pd.set_option('display.max_colwidth', -1)
+
+if version.parse(pd.__version__) < version.parse("1.0"):
+    pd.set_option('display.max_colwidth', -1)
+else:
+    pd.set_option('display.max_colwidth', None)
 
 
 @pytest.fixture
