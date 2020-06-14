@@ -621,7 +621,7 @@ void centroids_fit_photon(double *p, fit_data_struct<OT> *fit_data,
     // Calculate fractional errors
 
     for (int i = 0; i < n_params; i++) {
-        p_frac_err[i] = pow(p_err[i], 0.5) / p[i];
+        p_frac_err[i] = p_err[i] / p[i];
         DEBUG_PRINT("ERROR : err[%i] = %12g\n",
             i, p_frac_err[i]);
     }
