@@ -12,3 +12,18 @@
 ## Introduction
 
 Routines for performing single photon counting and centroiding of CCD data
+
+## Documentation
+
+The documentation can be found [online](https://nsls-ii.github.io/centroids/).
+
+## Changes
+
+### v0.1.11
+
+* Fixed bug in standard error for 2D fits calculations. Incorrect number of data points was used.
+* Added range option to fitting parameters for _sigma_ and _position_
+* Modified CI to report tests and coverage
+* Improved unit tests to cover parameter range selection
+* Added debug output to unit tests
+* Updated docs

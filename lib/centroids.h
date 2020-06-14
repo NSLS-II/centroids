@@ -45,6 +45,7 @@ extern const char* CENTROIDS_GIT_VERSION;
 
 #define CENTROIDS_TABLE_COLS                  9
 #define CENTROIDS_FIT_PARAMS_MAX              5
+#define CENTROIDS_FIT_PARAMS_CONST_MAX        4
 #define CENTROIDS_FIT_PARAMS_2D_N             5
 #define CENTROIDS_FIT_PARAMS_1D_N             4
 #define CENTROIDS_FIT_EXTRA_N                 3
@@ -115,6 +116,7 @@ struct centroid_params {
     int fit_pixels;
     int tag_pixels;
     int filter_pixels;
+    double fit_params_const[CENTROIDS_FIT_PARAMS_CONST_MAX];
 };
 
 template <typename DT>

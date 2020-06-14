@@ -108,6 +108,7 @@ py::tuple find_photons(py::array_t<uint16_t> images,
                        int overlap_max, double sum_min, double sum_max,
                        bool fit_pixels_2d,
                        bool fit_pixels_1d_x, bool fit_pixels_1d_y,
+                       std::map<std::string, double> fit_constraints,
                        const std::string &return_pixels, bool return_map,
                        bool tag_pixels) {
     py::list out_list;
@@ -156,6 +157,7 @@ py::tuple find_photons(py::array_t<uint16_t> images,
     params.overlap_max = overlap_max;
     params.sum_min = sum_min;
     params.sum_max = sum_max;
+
     if (fit_pixels_2d) {
         params.fit_pixels |= CENTROIDS_FIT_2D;
     }
@@ -165,11 +167,26 @@ py::tuple find_photons(py::array_t<uint16_t> images,
     if (fit_pixels_1d_y) {
         params.fit_pixels |= CENTROIDS_FIT_1D_Y;
     }
+
+    if (fit_constraints.count("pos_range")) {
+        params.fit_params_const[0] = fit_constraints["pos_range"];
+    }
+    if (fit_constraints.count("pos_cent")) {
+        params.fit_params_const[1] = fit_constraints["pos_cent"];
+    }
+    if (fit_constraints.count("sigma_range")) {
+        params.fit_params_const[2] = fit_constraints["sigma_range"];
+    }
+    if (fit_constraints.count("sigma_cent")) {
+        params.fit_params_const[3] = fit_constraints["sigma_cent"];
+    }
+
     params.x = images_buffer.shape[2];
     params.y = images_buffer.shape[1];
     params.n = images_buffer.shape[0];
     params.return_map = return_map;
     params.tag_pixels = tag_pixels;
+
     if (filter_buffer.ndim == 2) {
         // Single ndim
         params.filter_pixels = CENTROIDS_FILTER_SINGLE;
@@ -271,6 +288,7 @@ PYBIND11_MODULE(_pycentroids, m) {
            py::arg("fit_pixels_2d"),
            py::arg("fit_pixels_1dx"),
            py::arg("fit_pixels_1dy"),
+           py::arg("fit_constraints"),
            py::arg("return_pixels"),
            py::arg("return_map"),
            py::arg("tag_pixels"));
