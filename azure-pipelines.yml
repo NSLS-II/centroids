@@ -53,7 +53,7 @@ jobs:
         inputs:
           codeCoverageTool: Cobertura
           summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
-          reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+          # reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
 
   - job: 'BuildLib'
     pool:
