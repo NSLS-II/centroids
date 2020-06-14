@@ -43,9 +43,7 @@ def gauss():
         out = out / out.max()
         out *= amp
 
-        # Now add noise
-        noise = np.random.normal(1, 0.000005, len(out))
-        return out * noise
+        return out
 
     return _gauss
 
