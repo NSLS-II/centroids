@@ -353,7 +353,7 @@ OT centroids_std_error_estimate_2d(OT *pixels,
         }
     }
 
-    sum /= (OT)N;
+    sum /= (OT)pow(N, 2);
 
     return pow(sum, 0.5);
 }
