@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Second Pass Through Photons &#8212; centroids v0.1.9-12-g8f533f8 documentation</title>
+    <title>Second Pass Through Photons &#8212; centroids v0.1.9-13-g951204c documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
@@ -40,7 +40,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           centroids</a>
-        <span class="navbar-text navbar-version pull-left"><b>v0.1.9-12</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>v0.1.9-13</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -186,7 +186,25 @@ integral of a <em>gaussian function</em>. In 2D this function is:</p>
 <p>where <span class="math notranslate nohighlight">\(I\)</span> is the intensity at pixel <span class="math notranslate nohighlight">\(x\)</span> (or <span class="math notranslate nohighlight">\(x,y\)</span> in 2D),
 <span class="math notranslate nohighlight">\(B\)</span> is the background and <span class="math notranslate nohighlight">\(x_0\)</span> and <span class="math notranslate nohighlight">\(y_0\)</span> are the center
 coordinates of the gaussian.</p>
-<p>The results of the fit are stored in the output table of photon parameters.</p>
+<p>The fit parameters <span class="math notranslate nohighlight">\(\sigma\)</span> and <span class="math notranslate nohighlight">\(x\)</span> (or <span class="math notranslate nohighlight">\(x,y\)</span> in 2D), can be
+constrained by passing their constrains to the photon finding routine. These
+constraints are implemented in the least squares fitting using the <span class="math notranslate nohighlight">\(\tanh\)</span>
+function, of the form:</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\DeclareMathOperator\tanh{tanh}\\p = m + r \tanh p_f\end{aligned}\end{align} \]</div>
+<p>where <span class="math notranslate nohighlight">\(p_f\)</span> is the parameter in the least squares fit, <span class="math notranslate nohighlight">\(p\)</span> is
+the parameter in the fitting function, <span class="math notranslate nohighlight">\(m\)</span> is the mean of the fitting
+parameter range and <span class="math notranslate nohighlight">\(r\)</span> is the range. This results in the fitting
+parameter being constrained in the range <span class="math notranslate nohighlight">\((m - r) &lt; p &lt; (m + r)\)</span>.</p>
+<p>The results of the fit are stored in the output table of photon parameters.
+The individual parameters are stored along with the computed error,
+calculated as the square root of the diagonal of the covarience matrix.</p>
+<p>The standard error on the fit is also calculated, given a suitable fit. The
+standard error is computed by comparing the actual data with the model:</p>
+<div class="math notranslate nohighlight">
+\[\mathrm{Std\,Err} = \sqrt{\frac{\sum_N \left( m - d \right)^2}{N}}\]</div>
+<p>where <span class="math notranslate nohighlight">\(N\)</span> is the number of data points used in the fit, <span class="math notranslate nohighlight">\(m\)</span>
+is the model value and <span class="math notranslate nohighlight">\(d\)</span> is the (experimentally) measured value.</p>
 <div class="figure align-default" id="id1">
 <span id="second-pass-digraph"></span><div class="graphviz"><img src="_images/graphviz-de96212482487173ed3b70b5697a2690d4238f53.png" alt="digraph second_pass {
  node[shape=&quot;box&quot;, style=rounded]
@@ -244,7 +262,7 @@ coordinates of the gaussian.</p>
     </p>
     <p>
         &copy; Copyright 2019, Stuart B. Wilkins.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.1.0.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.1.1.<br/>
     </p>
   </div>
 </footer>
