@@ -70,7 +70,33 @@ where :math:`I` is the intensity at pixel :math:`x` (or :math:`x,y` in 2D),
 :math:`B` is the background and :math:`x_0` and :math:`y_0` are the center
 coordinates of the gaussian.
 
+The fit parameters :math:`\sigma` and :math:`x` (or :math:`x,y` in 2D), can be
+constrained by passing their constrains to the photon finding routine. These
+constraints are implemented in the least squares fitting using the :math:`\tanh`
+function, of the form:
+
+.. math::
+   \DeclareMathOperator\tanh{tanh}
+
+   p = m + r \tanh p_f
+
+where :math:`p_f` is the parameter in the least squares fit, :math:`p` is
+the parameter in the fitting function, :math:`m` is the mean of the fitting
+parameter range and :math:`r` is the range. This results in the fitting
+parameter being constrained in the range :math:`(m - r) < p < (m + r)`.
+
 The results of the fit are stored in the output table of photon parameters.
+The individual parameters are stored along with the computed error,
+calculated as the square root of the diagonal of the covarience matrix.
+
+The standard error on the fit is also calculated, given a suitable fit. The
+standard error is computed by comparing the actual data with the model:
+
+.. math::
+   \mathrm{Std\,Err} = \sqrt{\frac{\sum_N \left( m - d \right)^2}{N}}
+
+where :math:`N` is the number of data points used in the fit, :math:`m`
+is the model value and :math:`d` is the (experimentally) measured value.
 
 .. _second_pass_digraph:
 
