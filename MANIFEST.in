@@ -5,6 +5,7 @@ include LICENSE/LICENSE_LMFIT
 include README.rst
 include requirements.txt
 
+include CMakeLists.txt
 recursive-include * CMakeLists.txt *.in
 recursive-include lib *.cpp *.h
 recursive-include python *.cpp *.h
