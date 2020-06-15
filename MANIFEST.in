@@ -6,9 +6,9 @@ include README.rst
 include requirements.txt
 
 recursive-include * CMakeLists.txt *.in
-recursive-include lib *.cpp *.h CMakeLists.txt
-recursive-include python *.cpp *.h CMakeLists.txt
-recursive-include lmfit *.c *.h CMakeLists.txt
+recursive-include lib *.cpp *.h
+recursive-include python *.cpp *.h
+recursive-include lmfit *.c *.h
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
