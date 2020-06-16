@@ -19,6 +19,12 @@ The documentation can be found [online](https://nsls-ii.github.io/centroids/).
 
 ## Changes
 
+### v0.2.0rc1
+
+Release candidate for v0.2.
+
+* Changed `MANIFEST.in` to allow for building with `pip`.
+
 ### v0.1.11
 
 * Fixed bug in standard error for 2D fits calculations. Incorrect number of data points was used.
