@@ -682,8 +682,6 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
     std::unique_ptr<OT[]> pixel_cluster_fit_int(new OT[params.box_n]);
     std::unique_ptr<OT[]> xvals(new OT[params.box_t]);
     std::unique_ptr<OT[]> yvals(new OT[params.box_t]);
-    std::unique_ptr<OT[]> pixel_weights_1d(new OT[params.box_n]);
-    std::unique_ptr<OT[]> pixel_weights_2d(new OT[params.box_t]);
 
     double fit_params[CENTROIDS_FIT_PARAMS_MAX];
 
@@ -691,11 +689,11 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
     // pixel data using lmfit
 
     fit_data_struct<OT> fit_data_2d =
-        { pixel_cluster_fit.get(), pixel_weights_2d.get(),
+        { pixel_cluster_fit.get(), params.fit_weights_2d,
             0, 0, params.box, { 0 }};
 
     fit_data_struct<OT> fit_data_1d =
-        { pixel_cluster_fit_int.get(), pixel_weights_1d.get(),
+        { pixel_cluster_fit_int.get(), params.fit_weights_1d,
             0, 0, params.box, { 0 }};
 
     // Constants for fitting (bounds)
@@ -706,17 +704,8 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
         DEBUG_PRINT("Fit constraint %d = %lf\n", i, params.fit_params_const[i]);
     }
 
-    // Statistical Weights for fitting
-
-    for (int i = 0; i < params.box_t; i++) {
-        pixel_weights_2d[i] = 1.0;
-    }
-
-    for (int i = 0; i < params.box_n; i++) {
-        pixel_weights_1d[i] = 1.0;
-    }
-
     // Loop over all pixel clusters
+
     for (auto photon = photon_map->begin();
          photon != photon_map->end(); photon+=params.box_t) {
         int box_sum = -params.box_t;

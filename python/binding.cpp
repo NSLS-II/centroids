@@ -109,6 +109,8 @@ py::tuple find_photons(py::array_t<uint16_t> images,
                        bool fit_pixels_2d,
                        bool fit_pixels_1d_x, bool fit_pixels_1d_y,
                        std::map<std::string, double> fit_constraints,
+                       py::array_t<double> fit_weights_2d,
+                       py::array_t<double> fit_weights_1d,
                        const std::string &return_pixels, bool return_map,
                        bool tag_pixels) {
     py::list out_list;
@@ -141,6 +143,27 @@ py::tuple find_photons(py::array_t<uint16_t> images,
 
     uint16_t *images_ptr = reinterpret_cast<uint16_t*>(images_buffer.ptr);
     uint16_t *filter_ptr = reinterpret_cast<uint16_t*>(filter_buffer.ptr);
+
+    py::buffer_info fit_weights_2d_buffer = fit_weights_2d.request();
+    py::buffer_info fit_weights_1d_buffer = fit_weights_1d.request();
+
+    if (fit_weights_2d_buffer.ndim != 2) {
+        throw std::runtime_error("Number of dimensions must be 2");
+    }
+
+    if (fit_weights_1d_buffer.ndim != 1) {
+        throw std::runtime_error("Number of dimensions must be 2");
+    }
+
+    if ((fit_weights_2d_buffer.shape[0] != ((2 * box + 1))) ||
+        (fit_weights_2d_buffer.shape[1] != ((2 * box + 1)))) {
+            throw std::runtime_error(
+                "Array size must be of size (2n + 1, 2n + 1)");
+    }
+
+    if (fit_weights_1d_buffer.shape[0] != ((2 * box) + 1)) {
+        throw std::runtime_error("Array size must be of size (2n + 1)");
+    }
 
     PhotonTable<double>* photon_table(new PhotonTable<double>);
     std::vector<uint16_t>* pixels = NULL;
@@ -207,6 +230,11 @@ py::tuple find_photons(py::array_t<uint16_t> images,
     if (params.return_pixels != CENTROIDS_STORE_NONE) {
         pixels = new std::vector<uint16_t>;
     }
+
+    params.fit_weights_2d =
+        reinterpret_cast<double*>(fit_weights_2d_buffer.ptr);
+    params.fit_weights_1d =
+        reinterpret_cast<double*>(fit_weights_1d_buffer.ptr);
 
     if (centroids_calculate_params<uint16_t, double>(&params)
             != CENTROIDS_PARAMS_OK) {
@@ -289,6 +317,8 @@ PYBIND11_MODULE(_pycentroids, m) {
            py::arg("fit_pixels_1dx"),
            py::arg("fit_pixels_1dy"),
            py::arg("fit_constraints"),
+           py::arg("fit_weights_2d"),
+           py::arg("fit_weights_1d"),
            py::arg("return_pixels"),
            py::arg("return_map"),
            py::arg("tag_pixels"));
