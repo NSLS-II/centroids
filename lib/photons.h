@@ -92,6 +92,7 @@ const char *centroids_photon_table_names_fit1dy[] = {
 template <typename OT>
 struct fit_data_struct {
     OT *measured;
+    OT *w;
     OT x;
     OT y;
     int box;
