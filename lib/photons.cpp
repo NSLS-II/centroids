@@ -176,6 +176,9 @@ void centroids_initialize_params(centroid_params<DT, OT> *params) {
     params->fit_params_const[1] = 0;
     params->fit_params_const[2] = 0.2;
     params->fit_params_const[3] = 0.45;
+
+    params->fit_weights_2d = NULL;
+    params->fit_weights_1d = NULL;
 }
 
 /* -------------------------------------------------------------------------*/
