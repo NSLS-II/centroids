@@ -107,6 +107,7 @@ py::tuple find_photons(py::array_t<uint16_t> images,
                        int pixel_photon, int pixel_bgnd, int com_photon,
                        int overlap_max, double sum_min, double sum_max,
                        py::array_t<double> pixel_lut,
+                       std::tuple<double, double> pixel_lut_range,
                        bool fit_pixels_2d,
                        bool fit_pixels_1d_x, bool fit_pixels_1d_y,
                        std::map<std::string, double> fit_constraints,
@@ -172,11 +173,6 @@ py::tuple find_photons(py::array_t<uint16_t> images,
         throw std::runtime_error(
             "Lookup table must be 1d array");
     }
-
-    // We assume the LUT runs from -1 to 1.
-    std::shared_ptr<centroids_pixel_lut<double>> lut(
-        new centroids_pixel_lut<double>);
-    centroids_init_pixel_lut<double>(lut, -1, 1, pixel_lut_buffer.shape[0]);
 
     PhotonTable<double>* photon_table(new PhotonTable<double>);
     std::vector<uint16_t>* pixels = NULL;
@@ -248,6 +244,12 @@ py::tuple find_photons(py::array_t<uint16_t> images,
         reinterpret_cast<double*>(fit_weights_2d_buffer.ptr);
     params.fit_weights_1d =
         reinterpret_cast<double*>(fit_weights_1d_buffer.ptr);
+
+    std::shared_ptr<centroids_pixel_lut<double>> lut(
+        new centroids_pixel_lut<double>);
+    centroids_init_pixel_lut<double>(lut,
+        std::get<0>(pixel_lut_range), std::get<1>(pixel_lut_range),
+        pixel_lut_buffer.shape[0]);
 
     params.pixel_lut = lut;
 
@@ -329,6 +331,7 @@ PYBIND11_MODULE(_pycentroids, m) {
            py::arg("sum_min"),
            py::arg("sum_max"),
            py::arg("pixel_lut"),
+           py::arg("pixel_lut_range"),
            py::arg("fit_pixels_2d"),
            py::arg("fit_pixels_1dx"),
            py::arg("fit_pixels_1dy"),
