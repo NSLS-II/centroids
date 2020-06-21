@@ -251,6 +251,11 @@ py::tuple find_photons(py::array_t<uint16_t> images,
         std::get<0>(pixel_lut_range), std::get<1>(pixel_lut_range),
         pixel_lut_buffer.shape[0]);
 
+    auto pixel_lut_ptr = static_cast<double *>(pixel_lut_buffer.ptr);
+    for (int i=0; i < pixel_lut_buffer.shape[0]; i++) {
+        lut->data[i] = pixel_lut_ptr[i];
+    }
+
     params.pixel_lut = lut;
 
     if (centroids_calculate_params<uint16_t, double>(&params)
