@@ -62,8 +62,9 @@
  */
 /* -------------------------------------------------------------------------*/
 template <typename OT>
-int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
-                             OT start, OT stop, size_t points) {
+int centroids_init_pixel_lut(
+        const std::shared_ptr<centroids_pixel_lut<OT>> &lut,
+        OT start, OT stop, size_t points) {
     lut->start = start;
     lut->n_points = points + 1;
     lut->step = (stop - start) / points;
@@ -90,8 +91,9 @@ int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
  */
 /* -------------------------------------------------------------------------*/
 template <typename OT>
-int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> *lut,
-                                  OT start, OT stop, size_t points) {
+int centroids_default_pixel_lut(
+        const std::shared_ptr<centroids_pixel_lut<OT>> &lut,
+        OT start, OT stop, size_t points) {
     int rtn = centroids_init_pixel_lut(lut, start, stop, points);
     if (rtn) {
         return rtn;
@@ -118,9 +120,10 @@ int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> *lut,
  */
 /* -------------------------------------------------------------------------*/
 template <typename OT>
-int centroids_lookup_pixel_lut(const centroids_pixel_lut<OT> &lut,
-                               const OT ival, OT *oval) {
-    OT pos = (ival - lut.start) / lut.step;
+int centroids_lookup_pixel_lut(
+        const std::shared_ptr<centroids_pixel_lut<OT>> &lut,
+        const OT ival, OT *oval) {
+    OT pos = (ival - lut->start) / lut->step;
     if (pos < 0) {
         DEBUG_PRINT("ival = %lf pos = %lf RANGE LOW\n",
                 (double)ival, (double)pos);
@@ -128,13 +131,13 @@ int centroids_lookup_pixel_lut(const centroids_pixel_lut<OT> &lut,
     }
 
     size_t ipos = (size_t)pos;
-    if (ipos > lut.n_points) {
+    if (ipos > lut->n_points) {
         DEBUG_PRINT("ival = %lf ipos = %ld RANGE HIGH\n",
                 (double)ival, ipos);
         return CENTROIDS_LUT_RANGE_HIGH;
     }
 
-    *oval = lut.data[ipos];
+    *oval = lut->data[ipos];
     DEBUG_PRINT("ival = %lf ipos = %ld oval = %lf\n",
             (double)ival, ipos, (double)(*oval));
 
@@ -179,6 +182,10 @@ void centroids_initialize_params(centroid_params<DT, OT> *params) {
 
     params->fit_weights_2d = NULL;
     params->fit_weights_1d = NULL;
+
+    params->pixel_lut = std::shared_ptr<centroids_pixel_lut<OT>>(
+        new centroids_pixel_lut<OT>);
+    centroids_default_pixel_lut<OT>(params->pixel_lut, -1.0, 1.0, 2000);
 }
 
 /* -------------------------------------------------------------------------*/
@@ -434,19 +441,6 @@ size_t centroids_process(DT *image, uint16_t *out, uint16_t *filter,
                          const centroid_params<DT, OT> &params) {
     size_t n_photons = 0;
 
-    // Make the arrays for each image
-
-    // Allocate a single image
-    OT start = -1.1;
-    OT stop = 1.1;
-    size_t np = 1200;
-    centroids_pixel_lut<OT> pixel_lut;
-    if (centroids_calculate_pixel_lut<OT>(&pixel_lut, start, stop, np)
-       != CENTROIDS_LUT_OK) {
-        DEBUG_COMMENT("Failed to calculate LUT\n");
-        return 0;
-    }
-
 #ifdef _OPENMP
     // Output openmp info
     DEBUG_PRINT("omp_get_num_procs() = %d\n", omp_get_num_procs());
@@ -501,7 +495,7 @@ size_t centroids_process(DT *image, uint16_t *out, uint16_t *filter,
                     fphotons, photon_map.size());
 
             pphotons = centroids_process_photons<DT, OT>(
-                    &photon_map, &local_photon_table, pixel_lut,
+                    &photon_map, &local_photon_table, params.pixel_lut,
                     &local_photons, params);
 
             DEBUG_PRINT("Image %zu Found %zu photons, processed %zu photons\n",
@@ -676,7 +670,8 @@ void centroids_fit_photon(double *p, fit_data_struct<OT> *fit_data,
 
 template<typename DT, typename OT>
 size_t centroids_process_photons(PhotonMap<DT> *photon_map,
-        PhotonTable<OT> *photon_table, const centroids_pixel_lut<OT> &pixel_lut,
+        PhotonTable<OT> *photon_table,
+        const std::shared_ptr<centroids_pixel_lut<OT>> &pixel_lut,
         std::vector<DT> *photons, const centroid_params<DT, OT> &params) {
     size_t n_photons = 0;
 
@@ -1087,6 +1082,9 @@ template size_t centroids_process<uint16_t, double>(
         PhotonTable<double> *photon_table,
         std::vector<uint16_t> *photons,
         const centroid_params<uint16_t, double> &params);
+template int centroids_init_pixel_lut(
+        const std::shared_ptr<centroids_pixel_lut<double>> &lut,
+        double start, double stop, size_t points);
 
 template void centroids_initialize_params<uint16_t, float>(
         centroid_params<uint16_t, float> *params);
@@ -1099,3 +1097,6 @@ template size_t centroids_process<uint16_t, float>(
         PhotonTable<float> *photon_table,
         std::vector<uint16_t> *photons,
         const centroid_params<uint16_t, float> &params);
+template int centroids_init_pixel_lut(
+        const std::shared_ptr<centroids_pixel_lut<float>> &lut,
+        float start, float stop, size_t points);

@@ -6,7 +6,8 @@ from _pycentroids import find_photons as _find_photons
 def find_photons(images, filter=None,
                  threshold=200, box=2, search_box=1, pixel_photon=9,
                  pixel_bgnd=15, com_photon=9, overlap_max=0, sum_min=800,
-                 sum_max=1250, fit_pixels_2d=True, fit_pixels_1d_x=True,
+                 sum_max=1250, pixel_lut=None, pixel_lut_range=None,
+                 fit_pixels_2d=True, fit_pixels_1d_x=True,
                  fit_pixels_1d_y=True, fit_constraints=None,
                  fit_weights_2d=None, fit_weights_1d=None,
                  return_pixels='none', return_map=False, tag_pixels=False):
@@ -49,6 +50,11 @@ def find_photons(images, filter=None,
         The minimum integrated intensity to filter the output table.
     sum_max : float
         The maximum integrated intensity to filter the output table.
+    pixel_lut : np.array
+        Lookup table for the pixel COM correction. 1D array of
+        corrected position
+    pixel_lut_range: tuple
+        Tuple of the start and end coordinates for the LUT
     fit_pixels_2d : bool
         If true, fit the pixels from a photon with a 2D gaussian
     fit_pixels_1dx : bool
@@ -97,12 +103,20 @@ def find_photons(images, filter=None,
     if fit_weights_2d is None:
         fit_weights_2d = np.ones((2 * box + 1, 2 * box + 1))
 
+    if pixel_lut_range is None:
+        pixel_lut_range = (-1, 1)
+
+    if pixel_lut is None:
+        pixel_lut = np.linspace(pixel_lut_range[0], pixel_lut_range[1], 2000)
+
     _rtn = _find_photons(images=images, filter=filter,
                          threshold=threshold, box=box,
                          search_box=search_box,
                          pixel_photon=pixel_photon, pixel_bgnd=pixel_bgnd,
                          com_photon=com_photon, overlap_max=overlap_max,
                          sum_min=sum_min, sum_max=sum_max,
+                         pixel_lut=pixel_lut,
+                         pixel_lut_range=pixel_lut_range,
                          fit_pixels_2d=fit_pixels_2d,
                          fit_pixels_1dx=fit_pixels_1d_x,
                          fit_pixels_1dy=fit_pixels_1d_y,

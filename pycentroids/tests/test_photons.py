@@ -94,6 +94,8 @@ def test_find_photons(dataframe, gauss):
                                         threshold=250, box=box,
                                         search_box=box,
                                         sum_min=800, sum_max=1400,
+                                        pixel_lut=np.linspace(-2, 2, 2000),
+                                        pixel_lut_range=(-1, 1),
                                         pixel_photon=pixel_photon,
                                         pixel_bgnd=pixel_bgnd,
                                         fit_constraints=fit_constraints,
@@ -119,6 +121,8 @@ def test_find_photons(dataframe, gauss):
     assert table['Pixel Y'][0] == y
     assert pytest.approx(table['COM X'][0], 0.01) == x + cen_x
     assert pytest.approx(table['COM Y'][0], 0.01) == y + cen_y
+    assert pytest.approx(table['COR COM X'][0], 0.01) == x + 2 * cen_x
+    assert pytest.approx(table['COR COM Y'][0], 0.01) == y + 2 * cen_y
     assert pytest.approx(table['Int'][0]) == photon_int
     assert pytest.approx(table['Bgnd'][0]) == photon_bgnd
     assert pytest.approx(table['Fit X'][0], 0.05) == x + cen_x

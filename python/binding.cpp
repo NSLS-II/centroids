@@ -106,6 +106,8 @@ py::tuple find_photons(py::array_t<uint16_t> images,
                        uint16_t threshold, int box, int search_box,
                        int pixel_photon, int pixel_bgnd, int com_photon,
                        int overlap_max, double sum_min, double sum_max,
+                       py::array_t<double> pixel_lut,
+                       std::tuple<double, double> pixel_lut_range,
                        bool fit_pixels_2d,
                        bool fit_pixels_1d_x, bool fit_pixels_1d_y,
                        std::map<std::string, double> fit_constraints,
@@ -163,6 +165,13 @@ py::tuple find_photons(py::array_t<uint16_t> images,
 
     if (fit_weights_1d_buffer.shape[0] != ((2 * box) + 1)) {
         throw std::runtime_error("Array size must be of size (2n + 1)");
+    }
+
+    py::buffer_info pixel_lut_buffer = pixel_lut.request();
+
+    if (pixel_lut_buffer.ndim != 1) {
+        throw std::runtime_error(
+            "Lookup table must be 1d array");
     }
 
     PhotonTable<double>* photon_table(new PhotonTable<double>);
@@ -235,6 +244,19 @@ py::tuple find_photons(py::array_t<uint16_t> images,
         reinterpret_cast<double*>(fit_weights_2d_buffer.ptr);
     params.fit_weights_1d =
         reinterpret_cast<double*>(fit_weights_1d_buffer.ptr);
+
+    std::shared_ptr<centroids_pixel_lut<double>> lut(
+        new centroids_pixel_lut<double>);
+    centroids_init_pixel_lut<double>(lut,
+        std::get<0>(pixel_lut_range), std::get<1>(pixel_lut_range),
+        pixel_lut_buffer.shape[0]);
+
+    auto pixel_lut_ptr = static_cast<double *>(pixel_lut_buffer.ptr);
+    for (int i=0; i < pixel_lut_buffer.shape[0]; i++) {
+        lut->data[i] = pixel_lut_ptr[i];
+    }
+
+    params.pixel_lut = lut;
 
     if (centroids_calculate_params<uint16_t, double>(&params)
             != CENTROIDS_PARAMS_OK) {
@@ -313,6 +335,8 @@ PYBIND11_MODULE(_pycentroids, m) {
            py::arg("overlap_max"),
            py::arg("sum_min"),
            py::arg("sum_max"),
+           py::arg("pixel_lut"),
+           py::arg("pixel_lut_range"),
            py::arg("fit_pixels_2d"),
            py::arg("fit_pixels_1dx"),
            py::arg("fit_pixels_1dy"),
