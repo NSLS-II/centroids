@@ -51,7 +51,8 @@ def find_photons(images, filter=None,
     sum_max : float
         The maximum integrated intensity to filter the output table.
     pixel_lut : np.array
-        Lookup table for the pixel COM correction. 1D array of corrected position
+        Lookup table for the pixel COM correction. 1D array of
+        corrected position
     pixel_lut_range: tuple
         Tuple of the start and end coordinates for the LUT
     fit_pixels_2d : bool
@@ -106,8 +107,7 @@ def find_photons(images, filter=None,
         pixel_lut_range = (-1, 1)
 
     if pixel_lut is None:
-        pixel_lut = np.linspace(pixel_lut_range[0], pixel_lut_range[1],
-            2000)
+        pixel_lut = np.linspace(pixel_lut_range[0], pixel_lut_range[1], 2000)
 
     _rtn = _find_photons(images=images, filter=filter,
                          threshold=threshold, box=box,
