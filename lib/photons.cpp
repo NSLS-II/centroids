@@ -90,7 +90,7 @@ int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
  */
 /* -------------------------------------------------------------------------*/
 template <typename OT>
-int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> *lut,
+int centroids_default_pixel_lut(centroids_pixel_lut<OT> *lut,
                                   OT start, OT stop, size_t points) {
     int rtn = centroids_init_pixel_lut(lut, start, stop, points);
     if (rtn) {
@@ -179,6 +179,8 @@ void centroids_initialize_params(centroid_params<DT, OT> *params) {
 
     params->fit_weights_2d = NULL;
     params->fit_weights_1d = NULL;
+
+    centroids_default_pixel_lut<OT>(&params->pixel_lut, -1, 1, 1000);
 }
 
 /* -------------------------------------------------------------------------*/
@@ -437,15 +439,15 @@ size_t centroids_process(DT *image, uint16_t *out, uint16_t *filter,
     // Make the arrays for each image
 
     // Allocate a single image
-    OT start = -1.1;
-    OT stop = 1.1;
-    size_t np = 1200;
-    centroids_pixel_lut<OT> pixel_lut;
-    if (centroids_calculate_pixel_lut<OT>(&pixel_lut, start, stop, np)
-       != CENTROIDS_LUT_OK) {
-        DEBUG_COMMENT("Failed to calculate LUT\n");
-        return 0;
-    }
+    // OT start = -1.1;
+    // OT stop = 1.1;
+    // size_t np = 1200;
+    // centroids_pixel_lut<OT> pixel_lut;
+    // if (centroids_default_pixel_lut<OT>(&pixel_lut, start, stop, np)
+    //    != CENTROIDS_LUT_OK) {
+    //     DEBUG_COMMENT("Failed to calculate LUT\n");
+    //     return 0;
+    // }
 
 #ifdef _OPENMP
     // Output openmp info
@@ -501,7 +503,7 @@ size_t centroids_process(DT *image, uint16_t *out, uint16_t *filter,
                     fphotons, photon_map.size());
 
             pphotons = centroids_process_photons<DT, OT>(
-                    &photon_map, &local_photon_table, pixel_lut,
+                    &photon_map, &local_photon_table, params.pixel_lut,
                     &local_photons, params);
 
             DEBUG_PRINT("Image %zu Found %zu photons, processed %zu photons\n",
@@ -1087,6 +1089,9 @@ template size_t centroids_process<uint16_t, double>(
         PhotonTable<double> *photon_table,
         std::vector<uint16_t> *photons,
         const centroid_params<uint16_t, double> &params);
+template int centroids_init_pixel_lut(
+        centroids_pixel_lut<double> *lut,
+        double start, double stop, size_t points);
 
 template void centroids_initialize_params<uint16_t, float>(
         centroid_params<uint16_t, float> *params);
@@ -1099,3 +1104,6 @@ template size_t centroids_process<uint16_t, float>(
         PhotonTable<float> *photon_table,
         std::vector<uint16_t> *photons,
         const centroid_params<uint16_t, float> &params);
+template int centroids_init_pixel_lut(
+        centroids_pixel_lut<float> *lut,
+        float start, float stop, size_t points);

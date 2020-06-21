@@ -38,6 +38,7 @@
 #define LIB_CENTROIDS_H_
 
 #include <vector>
+#include <memory>
 
 extern const char* CENTROIDS_GIT_REV;
 extern const char* CENTROIDS_GIT_BRANCH;
@@ -88,6 +89,21 @@ extern const char *centroids_photon_table_names_fit1dy[];
 
 /* -------------------------------------------------------------------------*/
 /**
+ * \brief Data structre for pixel LUT
+ *
+ * @tparam OT
+ */
+/* -------------------------------------------------------------------------*/
+template <typename OT>
+struct centroids_pixel_lut {
+    std::unique_ptr<OT[]> data;
+    OT start;
+    OT step;
+    size_t n_points;
+};
+
+/* -------------------------------------------------------------------------*/
+/**
  * \brief Parameters for controlling the photon counting algorythm
  *
  * \tparam DT Data image datatype
@@ -119,6 +135,7 @@ struct centroid_params {
     double fit_params_const[CENTROIDS_FIT_PARAMS_CONST_MAX];
     OT *fit_weights_1d;
     OT *fit_weights_2d;
+    centroids_pixel_lut<OT> pixel_lut;
 };
 
 template <typename DT>
@@ -139,5 +156,9 @@ size_t centroids_process(DT *image, uint16_t *out, uint16_t *filter,
                          std::vector<DT> *photons,
                          const centroid_params<DT, OT>
                          &params);
+
+template <typename OT>
+int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
+                             OT start, OT stop, size_t points);
 
 #endif  // LIB_CENTROIDS_H_

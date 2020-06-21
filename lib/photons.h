@@ -101,21 +101,6 @@ struct fit_data_struct {
 
 /* -------------------------------------------------------------------------*/
 /**
- * \brief Data structre for pixel LUT
- *
- * @tparam OT
- */
-/* -------------------------------------------------------------------------*/
-template <typename OT>
-struct centroids_pixel_lut {
-    std::unique_ptr<OT[]> data;
-    OT start;
-    OT step;
-    size_t n_points;
-};
-
-/* -------------------------------------------------------------------------*/
-/**
  * \brief
  *
  * @tparam DT
@@ -132,12 +117,8 @@ template <typename DT>
 using PhotonMap = std::vector<photons<DT>>;
 
 template <typename OT>
-int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
-                             OT start, OT stop, int points);
-
-template <typename OT>
-int centroids_calculate_pixel_lut(centroids_pixel_lut<OT> *lut,
-                                  OT start, OT stop, int points);
+int centroids_default_pixel_lut(centroids_pixel_lut<OT> *lut,
+                                  OT start, OT stop, size_t points);
 
 template <typename OT>
 int centroids_lookup_pixel_lut(const centroids_pixel_lut<OT> &lut,
