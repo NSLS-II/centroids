@@ -683,6 +683,8 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
     std::unique_ptr<OT[]> pixel_cluster(new OT[params.box_t]);
     std::unique_ptr<OT[]> pixel_cluster_fit(new OT[params.box_t]);
     std::unique_ptr<OT[]> pixel_cluster_fit_int(new OT[params.box_n]);
+    std::unique_ptr<OT[]> fit_weights_2d(new OT[params.box_t]);
+    std::unique_ptr<OT[]> fit_weights_1d(new OT[params.box_n]);
     std::unique_ptr<OT[]> xvals(new OT[params.box_t]);
     std::unique_ptr<OT[]> yvals(new OT[params.box_t]);
 
@@ -692,11 +694,11 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
     // pixel data using lmfit
 
     fit_data_struct<OT> fit_data_2d =
-        { pixel_cluster_fit.get(), params.fit_weights_2d,
+        { pixel_cluster_fit.get(), fit_weights_2d.get(),
             0, 0, params.box, { 0 }};
 
     fit_data_struct<OT> fit_data_1d =
-        { pixel_cluster_fit_int.get(), params.fit_weights_1d,
+        { pixel_cluster_fit_int.get(), fit_weights_1d.get(),
             0, 0, params.box, { 0 }};
 
     // Constants for fitting (bounds)
@@ -705,6 +707,29 @@ size_t centroids_process_photons(PhotonMap<DT> *photon_map,
         fit_data_2d.p0[i] = params.fit_params_const[i];
         fit_data_1d.p0[i] = params.fit_params_const[i];
         DEBUG_PRINT("Fit constraint %d = %lf\n", i, params.fit_params_const[i]);
+    }
+
+    // Load Statistical weights
+    if (params.fit_weights_2d != NULL) {
+        for (int i = 0; i < params.box_t; i++) {
+            fit_weights_2d[i] = params.fit_weights_2d[i];
+            DEBUG_PRINT("Fit weight 2d %d = %lf\n", i, fit_weights_2d[i]);
+        }
+    } else {
+        for (int i = 0; i < params.box_t; i++) {
+            fit_weights_2d[i] = 1.0;
+        }
+    }
+
+    if (params.fit_weights_1d != NULL) {
+        for (int i = 0; i < params.box_n; i++) {
+            fit_weights_1d[i] = params.fit_weights_1d[i];
+            DEBUG_PRINT("Fit weight 1d %d = %lf\n", i, fit_weights_1d[i]);
+        }
+    } else {
+        for (int i = 0; i < params.box_n; i++) {
+            fit_weights_1d[i] = 1.0;
+        }
     }
 
     // Loop over all pixel clusters
