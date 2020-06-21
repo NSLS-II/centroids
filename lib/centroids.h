@@ -135,7 +135,7 @@ struct centroid_params {
     double fit_params_const[CENTROIDS_FIT_PARAMS_CONST_MAX];
     OT *fit_weights_1d;
     OT *fit_weights_2d;
-    centroids_pixel_lut<OT> pixel_lut;
+    std::shared_ptr<centroids_pixel_lut<OT>> pixel_lut;
 };
 
 template <typename DT>
@@ -158,7 +158,8 @@ size_t centroids_process(DT *image, uint16_t *out, uint16_t *filter,
                          &params);
 
 template <typename OT>
-int centroids_init_pixel_lut(centroids_pixel_lut<OT> *lut,
-                             OT start, OT stop, size_t points);
+int centroids_init_pixel_lut(
+    const std::shared_ptr<centroids_pixel_lut<OT>> &lut,
+    OT start, OT stop, size_t points);
 
 #endif  // LIB_CENTROIDS_H_

@@ -117,16 +117,19 @@ template <typename DT>
 using PhotonMap = std::vector<photons<DT>>;
 
 template <typename OT>
-int centroids_default_pixel_lut(centroids_pixel_lut<OT> *lut,
-                                  OT start, OT stop, size_t points);
+int centroids_default_pixel_lut(
+    const std::shared_ptr<centroids_pixel_lut<OT>> &lut,
+    OT start, OT stop, size_t points);
 
 template <typename OT>
-int centroids_lookup_pixel_lut(const centroids_pixel_lut<OT> &lut,
-                               const OT ival, OT *oval);
+int centroids_lookup_pixel_lut(
+    const std::shared_ptr<centroids_pixel_lut<OT>> &lut,
+    const OT ival, OT *oval);
 
 template<typename DT, typename OT>
 size_t centroids_process_photons(PhotonMap<DT> *photon_map,
-        PhotonTable<OT> *photon_table, const centroids_pixel_lut<OT> &pixel_lut,
+        PhotonTable<OT> *photon_table,
+        const std::shared_ptr<centroids_pixel_lut<OT>> &pixel_lut,
         std::vector<DT> *photons, const centroid_params<DT, OT> &params);
 
 template<typename DT, typename OT>
