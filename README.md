@@ -19,6 +19,11 @@ The documentation can be found [online](https://nsls-ii.github.io/centroids/).
 
 ## Changes
 
+### v0.2.0rc2
+
+* Exposed Pixel Lookup Table to python interface
+* Added weights for 1D and 2D Fits
+
 ### v0.2.0rc1
 
 Release candidate for v0.2.
