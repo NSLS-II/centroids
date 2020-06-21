@@ -117,6 +117,8 @@ struct centroid_params {
     int tag_pixels;
     int filter_pixels;
     double fit_params_const[CENTROIDS_FIT_PARAMS_CONST_MAX];
+    OT *fit_weights_1d;
+    OT *fit_weights_2d;
 };
 
 template <typename DT>

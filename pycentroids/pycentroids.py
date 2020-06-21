@@ -8,6 +8,7 @@ def find_photons(images, filter=None,
                  pixel_bgnd=15, com_photon=9, overlap_max=0, sum_min=800,
                  sum_max=1250, fit_pixels_2d=True, fit_pixels_1d_x=True,
                  fit_pixels_1d_y=True, fit_constraints=None,
+                 fit_weights_2d=None, fit_weights_1d=None,
                  return_pixels='none', return_map=False, tag_pixels=False):
     """Find photons in CCD images and process for sub-pixel center.
 
@@ -61,6 +62,11 @@ def find_photons(images, filter=None,
         Currently the dictionary keys can be:
             pos_range, pos_cent : Position (x) of photon range and center
             sigma_range, sigma_cent : Sigma of the gaussian range anc center
+    fit_weights_2d : np.array
+        array of size (2 * box + 1) * (2 * box + 1) of the weights to use for
+        the pixel fit
+    fit_weights_1d : np.array
+        array of size (2 * box + 1) of the weights to use for the pixel fits
     return_pixels : 'none', 'sorted', 'unsorted'
         Option to return array of pixel values
     return_map : bool
@@ -85,6 +91,12 @@ def find_photons(images, filter=None,
     if fit_constraints is None:
         fit_constraints = {}
 
+    if fit_weights_1d is None:
+        fit_weights_1d = np.ones((2 * box + 1))
+
+    if fit_weights_2d is None:
+        fit_weights_2d = np.ones((2 * box + 1, 2 * box + 1))
+
     _rtn = _find_photons(images=images, filter=filter,
                          threshold=threshold, box=box,
                          search_box=search_box,
@@ -95,6 +107,8 @@ def find_photons(images, filter=None,
                          fit_pixels_1dx=fit_pixels_1d_x,
                          fit_pixels_1dy=fit_pixels_1d_y,
                          fit_constraints=fit_constraints,
+                         fit_weights_2d=fit_weights_2d,
+                         fit_weights_1d=fit_weights_1d,
                          return_pixels=return_pixels, return_map=return_map,
                          tag_pixels=tag_pixels)
 
